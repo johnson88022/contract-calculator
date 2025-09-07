@@ -2,6 +2,14 @@ document.addEventListener("DOMContentLoaded", () => {
   const resultDiv = document.getElementById("result");
   const historyDiv = document.getElementById("history");
   const clearBtn = document.getElementById("clearHistory");
+  // 簡易封裝：取得/寫入歷史紀錄
+  function getHistory() {
+    return JSON.parse(localStorage.getItem("calcHistory") || "[]");
+  }
+  function setHistory(list) {
+    localStorage.setItem("calcHistory", JSON.stringify(list));
+  }
+
 
   loadHistory();
 
@@ -79,8 +87,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const resultText = `
       <div><strong>幣種</strong>：${symbol}</div>
       <div><strong>止損幅度</strong>：${stopPercent}%</div>
-      <div><strong>倉位價值</strong>：${positionValue.toFixed(2)} USDT</div>
-      <div><strong>需保證金</strong>：${margin.toFixed(2)} USDT</div>
+      <div><strong>倉位價值</strong>：${positionValue.toFixed(2)} U</div>
+      <div><strong>需保證金</strong>：${margin.toFixed(2)} U</div>
       ${totalClosePct > 0 ? `
       <div style="margin:6px 0;border-top:1px solid #e5e7eb;"></div>
       <div><strong>止盈比例</strong>：${tp1Pct}/${tp2Pct}/${tp3Pct}</div>
@@ -122,23 +130,30 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   function saveResult(record) {
-    let history = JSON.parse(localStorage.getItem("calcHistory") || "[]");
+    let history = getHistory();
     history.unshift(record);
     if (history.length > 20) history = history.slice(0, 20);
-    localStorage.setItem("calcHistory", JSON.stringify(history));
+    setHistory(history);
   }
 
   function deleteRecord(index) {
     showConfirm("確定要刪除此紀錄嗎？", () => {
-      let history = JSON.parse(localStorage.getItem("calcHistory") || "[]");
+      let history = getHistory();
       history.splice(index, 1);
-      localStorage.setItem("calcHistory", JSON.stringify(history));
+      setHistory(history);
       loadHistory();
     });
   }
 
+  function updateRecord(index, fields) {
+    const history = getHistory();
+    if (!history[index]) return;
+    history[index] = { ...history[index], ...fields };
+    setHistory(history);
+  }
+
   function loadHistory() {
-    const history = JSON.parse(localStorage.getItem("calcHistory") || "[]");
+    const history = getHistory();
     if (history.length === 0) {
       historyDiv.innerHTML = "尚無紀錄";
       return;
@@ -156,19 +171,50 @@ document.addEventListener("DOMContentLoaded", () => {
         <strong>方向:</strong> ${r.direction === 'long' ? '做多 📈' : '做空 📉'}, <strong>槓桿:</strong> ${r.leverage}x<br>
         <strong>進場:</strong> ${r.entry}, <strong>止損:</strong> ${r.stop}, <strong>允許虧損:</strong> ${r.maxLoss}<br>
         📉 <strong>止損幅度:</strong> ${r.stopPercent}%<br>
-        💰 <strong>倉位:</strong> ${r.positionValue} USDT<br>
-        🏦 <strong>保證金:</strong> ${r.margin} USDT<br>
+        💰 <strong>倉位:</strong> ${r.positionValue} U<br>
+        🏦 <strong>保證金:</strong> ${r.margin} U<br>
         ${tp ? `
         🎯 <strong>止盈計畫:</strong> 總比例 ${tp.totalPct}%<br>
-        TP1: 價 ${tp.tp1.price ?? '-'}，${tp.tp1.pct}% ，平倉價值 ${tp.tp1.closeValue} USDT<br>
-        TP2: 價 ${tp.tp2.price ?? '-'}，${tp.tp2.pct}% ，平倉價值 ${tp.tp2.closeValue} USDT<br>
-        TP3: 價 ${tp.tp3.price ?? '-'}，${tp.tp3.pct}% ，平倉價值 ${tp.tp3.closeValue} USDT<br>
+        TP1: 價 ${tp.tp1.price ?? '-'}，${tp.tp1.pct}% ，平倉價值 ${tp.tp1.closeValue} U<br>
+        TP2: 價 ${tp.tp2.price ?? '-'}，${tp.tp2.pct}% ，平倉價值 ${tp.tp2.closeValue} U<br>
+        TP3: 價 ${tp.tp3.price ?? '-'}，${tp.tp3.pct}% ，平倉價值 ${tp.tp3.closeValue} U<br>
         ` : ''}
       `;
-      const btn = document.createElement("button");
-      btn.textContent = "🗑️ 刪除";
-      btn.addEventListener("click", () => deleteRecord(i));
-      div.appendChild(btn);
+      // 可編輯：TP 結果 與 R 值
+      const editWrap = document.createElement("div");
+      editWrap.style.display = "grid";
+      editWrap.style.gridTemplateColumns = "1fr 1fr auto";
+      editWrap.style.gap = "6px";
+      editWrap.style.marginTop = "6px";
+
+      const tpInput = document.createElement("input");
+      tpInput.type = "text";
+      tpInput.placeholder = "TP 結果(例如: TP2)";
+      tpInput.value = r.tpResult || "";
+
+      const rInput = document.createElement("input");
+      rInput.type = "number";
+      rInput.step = "0.01";
+      rInput.placeholder = "R 值";
+      rInput.value = r.rValue || "";
+
+      const saveBtn = document.createElement("button");
+      saveBtn.textContent = "保存";
+      saveBtn.addEventListener("click", () => {
+        updateRecord(i, { tpResult: tpInput.value.trim(), rValue: rInput.value === '' ? null : parseFloat(rInput.value) });
+        loadHistory();
+      });
+
+      editWrap.appendChild(tpInput);
+      editWrap.appendChild(rInput);
+      editWrap.appendChild(saveBtn);
+      div.appendChild(editWrap);
+
+      const delBtn = document.createElement("button");
+      delBtn.textContent = "🗑️ 刪除";
+      delBtn.style.marginTop = "6px";
+      delBtn.addEventListener("click", () => deleteRecord(i));
+      div.appendChild(delBtn);
       historyDiv.appendChild(div);
     });
   }
