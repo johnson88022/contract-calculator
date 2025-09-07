@@ -180,46 +180,92 @@ document.addEventListener("DOMContentLoaded", () => {
         TP3: 價 ${tp.tp3.price ?? '-'}，${tp.tp3.pct}% ，平倉價值 ${tp.tp3.closeValue} U<br>
         ` : ''}
       `;
-      // 可編輯：TP 結果(下拉) 與 R 值(數字)，置於刪除鍵左側
-      const editWrap = document.createElement("div");
-      editWrap.style.display = "grid";
-      editWrap.style.gridTemplateColumns = "auto auto auto";
-      editWrap.style.gap = "6px";
-      editWrap.style.marginTop = "6px";
+      // TP 結果 / R：文字檢視 與 編輯模式切換
+      const controls = document.createElement("div");
+      controls.style.display = "grid";
+      controls.style.gridTemplateColumns = "1fr auto auto"; // 文本 | 編輯 | 刪除
+      controls.style.gap = "6px";
+      controls.style.alignItems = "center";
+      controls.style.marginTop = "6px";
 
-      const tpSelect = document.createElement("select");
-      ["", "TP1", "TP2", "TP3", "SL"].forEach(v => {
-        const opt = document.createElement("option");
-        opt.value = v;
-        opt.textContent = v === "" ? "選擇結果" : v;
-        if ((r.tpOutcome || "") === v) opt.selected = true;
-        tpSelect.appendChild(opt);
-      });
+      const textSpan = document.createElement("div");
+      const renderText = () => {
+        const outcome = r.tpOutcome ? r.tpOutcome : "-";
+        const rval = (r.rValue === 0 || r.rValue) ? r.rValue : "-";
+        textSpan.textContent = `結果：${outcome} ｜ R：${rval}`;
+      };
+      renderText();
 
-      const rInput = document.createElement("input");
-      rInput.type = "number";
-      rInput.step = "0.01";
-      rInput.placeholder = "R";
-      rInput.value = (r.rValue ?? "");
+      const editBtn = document.createElement("button");
+      editBtn.textContent = "編輯";
 
       const delBtn = document.createElement("button");
       delBtn.textContent = "🗑️ 刪除";
       delBtn.addEventListener("click", () => deleteRecord(i));
 
-      const persist = () => {
-        const next = {
-          tpOutcome: tpSelect.value || null,
-          rValue: rInput.value === '' ? null : parseFloat(rInput.value)
-        };
-        updateRecord(i, next);
-      };
-      tpSelect.addEventListener("change", persist);
-      rInput.addEventListener("blur", persist);
+      const enterEditMode = () => {
+        // 以選單與數字欄位替換文本與編輯鍵
+        const tpSelect = document.createElement("select");
+        ["", "TP1", "TP2", "TP3", "SL"].forEach(v => {
+          const opt = document.createElement("option");
+          opt.value = v;
+          opt.textContent = v === "" ? "選擇結果" : v;
+          if ((r.tpOutcome || "") === v) opt.selected = true;
+          tpSelect.appendChild(opt);
+        });
+        const rInput = document.createElement("input");
+        rInput.type = "number"; rInput.step = "0.01"; rInput.placeholder = "R";
+        rInput.value = (r.rValue === 0 || r.rValue) ? r.rValue : "";
 
-      editWrap.appendChild(tpSelect);
-      editWrap.appendChild(rInput);
-      editWrap.appendChild(delBtn);
-      div.appendChild(editWrap);
+        const saveBtn = document.createElement("button");
+        saveBtn.textContent = "保存";
+        const cancelBtn = document.createElement("button");
+        cancelBtn.textContent = "取消";
+
+        // 重新佈局：選單 | R | 保存 | 取消 | 刪除
+        controls.innerHTML = "";
+        controls.style.gridTemplateColumns = "auto auto auto auto auto";
+        controls.appendChild(tpSelect);
+        controls.appendChild(rInput);
+        controls.appendChild(saveBtn);
+        controls.appendChild(cancelBtn);
+        controls.appendChild(delBtn);
+
+        saveBtn.addEventListener("click", () => {
+          const next = {
+            tpOutcome: tpSelect.value || null,
+            rValue: rInput.value === '' ? null : parseFloat(rInput.value)
+          };
+          updateRecord(i, next);
+          // 更新本地 r 並恢復文字顯示
+          r.tpOutcome = next.tpOutcome;
+          r.rValue = next.rValue;
+          // 回文字檢視：文本 | 編輯 | 刪除
+          controls.innerHTML = "";
+          controls.style.gridTemplateColumns = "1fr auto auto";
+          renderText();
+          controls.appendChild(textSpan);
+          controls.appendChild(editBtn);
+          controls.appendChild(delBtn);
+        });
+        cancelBtn.addEventListener("click", () => {
+          // 回文字檢視
+          controls.innerHTML = "";
+          controls.style.gridTemplateColumns = "1fr auto auto";
+          renderText();
+          controls.appendChild(textSpan);
+          controls.appendChild(editBtn);
+          controls.appendChild(delBtn);
+        });
+      };
+
+      editBtn.addEventListener("click", enterEditMode);
+
+      // 初始渲染：文字 | 編輯 | 刪除
+      controls.appendChild(textSpan);
+      controls.appendChild(editBtn);
+      controls.appendChild(delBtn);
+      div.appendChild(controls);
       historyDiv.appendChild(div);
     });
   }
