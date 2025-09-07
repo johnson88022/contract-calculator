@@ -13,7 +13,9 @@
 
 ## 🚀 線上使用
 
-[![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-線上使用-blue?style=for-the-badge&logo=github)](https://YOUR_USERNAME.github.io/contract-calculator)
+[![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-線上使用-blue?style=for-the-badge&logo=github)](https://johnson88022.github.io/contract-calculator)
+ 
+直接網址：`https://johnson88022.github.io/contract-calculator`
 
 ## 📱 手機安裝
 
@@ -56,7 +58,7 @@
 
 1. 克隆倉庫
 ```bash
-git clone https://github.com/YOUR_USERNAME/contract-calculator.git
+git clone https://github.com/johnson88022/contract-calculator.git
 cd contract-calculator
 ```
 
