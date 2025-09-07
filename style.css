@@ -119,6 +119,40 @@ button {
   font-weight: 500;
 }
 
+/* 結果區 – 簡潔樣式 */
+.result-summary {
+  display: block;
+  font-weight: 600;
+  color: #111827;
+}
+.result-hint {
+  color: #6b7280;
+  font-weight: 400;
+  margin-left: 6px;
+}
+.result-details {
+  margin-top: 8px;
+}
+.tp-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 6px;
+}
+.tp-table th, .tp-table td {
+  padding: 6px 4px;
+  border-bottom: 1px solid #e5e7eb;
+  font-weight: 500;
+}
+.tp-table th {
+  text-align: left;
+  color: #374151;
+  font-weight: 600;
+}
+.tp-table td small { color:#6b7280; }
+
+details > summary { list-style: none; }
+details[open] > summary .result-hint { display: none; }
+
 /* 歷史紀錄區域 */
 h2 {
   font-size: 18px;

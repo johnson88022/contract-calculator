@@ -114,13 +114,28 @@ document.addEventListener("DOMContentLoaded", () => {
       ` : ''}
     `;
 
+    const tpTable = showTPBlock ? `
+      <table class="tp-table">
+        <thead>
+          <tr><th>TP</th><th>價位</th><th>比例</th><th>平倉價值</th><th>預期盈虧</th></tr>
+        </thead>
+        <tbody>
+          ${tp1Pct>0 ? `<tr><td>TP1</td><td>${isNaN(tp1Price)||tp1Price<=0?'-':tp1Price}</td><td>${tp1Pct}%</td><td>${tp1CloseValue.toFixed(2)} U</td><td>${tp1Profit.toFixed(2)} U</td></tr>` : ''}
+          ${tp2Pct>0 ? `<tr><td>TP2</td><td>${isNaN(tp2Price)||tp2Price<=0?'-':tp2Price}</td><td>${tp2Pct}%</td><td>${tp2CloseValue.toFixed(2)} U</td><td>${tp2Profit.toFixed(2)} U</td></tr>` : ''}
+          ${tp3Pct>0 ? `<tr><td>TP3</td><td>${isNaN(tp3Price)||tp3Price<=0?'-':tp3Price}</td><td>${tp3Pct}%</td><td>${tp3CloseValue.toFixed(2)} U</td><td>${tp3Profit.toFixed(2)} U</td></tr>` : ''}
+        </tbody>
+      </table>
+    ` : '';
+
     const resultText = `
       <details>
-        <summary style="cursor:pointer;outline:none;list-style:none;">
-          <span style="display:inline-block;font-weight:600;">${summaryLine}</span>
-          <span style="color:#6b7280;margin-left:6px;">點擊展開詳情</span>
+        <summary class="result-summary" style="cursor:pointer;outline:none;">
+          ${summaryLine}<span class="result-hint">點擊展開詳情</span>
         </summary>
-        <div style="margin-top:8px;">${detailsBlock}</div>
+        <div class="result-details">
+          ${detailsBlock}
+          ${tpTable}
+        </div>
       </details>
     `;
 
