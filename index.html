@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>合約倉位計算器</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#667eea">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="倉位計算器">
+</head>
+<body>
+  <div class="container">
+    <h1>合約倉位計算器</h1>
+
+    <div class="form-group">
+      <label>槓桿 (L):</label>
+      <input type="number" id="leverage" value="10" min="1" max="125" title="槓桿倍數">
+    </div>
+
+    <div class="form-group">
+      <label>方向:</label>
+      <select id="direction" title="交易方向">
+        <option value="long">做多 📈</option>
+        <option value="short">做空 📉</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>進場價 (E):</label>
+      <input type="number" id="entry" step="0.01" placeholder="請輸入進場價格">
+    </div>
+
+    <div class="form-group">
+      <label>止損價 (S):</label>
+      <input type="number" id="stop" step="0.01" placeholder="請輸入止損價格">
+    </div>
+
+    <div class="form-group">
+      <label>止損最大金額 (M, USDT):</label>
+      <input type="number" id="maxLoss" step="0.01" placeholder="請輸入最大虧損金額">
+    </div>
+
+    <div class="form-group">
+      <label>幣種:</label>
+      <input type="text" id="symbol" placeholder="例如：BTC/USDT">
+    </div>
+
+    <button id="calculate">🚀 計算倉位</button>
+    <div id="result"></div>
+
+    <h2>📊 歷史紀錄</h2>
+    <button id="clearHistory">🗑️ 清除全部紀錄</button>
+    <div id="history"></div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
