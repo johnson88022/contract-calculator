@@ -74,7 +74,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // 開倉張數（合約數）= M / 每合約風險
     const contracts = M / riskPerContract;
 
-    // 各 TP 平倉倉位價值（以 USDT 計），用比例占比乘上總倉位價值
+    // 各 TP 平倉倉位價值（以 U 計），用比例占比乘上總倉位價值
     function calcTpCloseValue(pct) {
       if (!pct || pct <= 0) return 0;
       // 以倉位價值比例計算要平倉的價值（與目標價無關）
@@ -86,6 +86,17 @@ document.addEventListener("DOMContentLoaded", () => {
     const tp2CloseValue = calcTpCloseValue(tp2Pct);
     const tp3CloseValue = calcTpCloseValue(tp3Pct);
 
+    // 各 TP 預期盈利（以 U 計）
+    function calcTpProfit(tpPrice) {
+      if (isNaN(tpPrice) || tpPrice <= 0) return 0;
+      const changePct = dir === "long" ? (tpPrice - E) / E : (E - tpPrice) / E;
+      return positionValue * changePct; // 用倉位價值 × 漲跌幅近似 PnL
+    }
+
+    const tp1Profit = calcTpProfit(tp1Price);
+    const tp2Profit = calcTpProfit(tp2Price);
+    const tp3Profit = calcTpProfit(tp3Price);
+
     const resultText = `
       <div><strong>幣種</strong>：${symbol}</div>
       <div><strong>止損幅度</strong>：${stopPercent}%</div>
@@ -94,9 +105,9 @@ document.addEventListener("DOMContentLoaded", () => {
       ${totalClosePct > 0 ? `
       <div style="margin:6px 0;border-top:1px solid #e5e7eb;"></div>
       <div><strong>止盈比例</strong>：${tp1Pct}/${tp2Pct}/${tp3Pct}</div>
-      ${tp1Pct>0 ? `<div>TP1：價 ${isNaN(tp1Price)||tp1Price<=0?'-':tp1Price} ｜ 比例 ${tp1Pct}% ｜ 平倉價值 ≈ <b>${tp1CloseValue.toFixed(2)} U</b></div>` : ''}
-      ${tp2Pct>0 ? `<div>TP2：價 ${isNaN(tp2Price)||tp2Price<=0?'-':tp2Price} ｜ 比例 ${tp2Pct}% ｜ 平倉價值 ≈ <b>${tp2CloseValue.toFixed(2)} U</b></div>` : ''}
-      ${tp3Pct>0 ? `<div>TP3：價 ${isNaN(tp3Price)||tp3Price<=0?'-':tp3Price} ｜ 比例 ${tp3Pct}% ｜ 平倉價值 ≈ <b>${tp3CloseValue.toFixed(2)} U</b></div>` : ''}
+      ${tp1Pct>0 ? `<div>TP1：價 ${isNaN(tp1Price)||tp1Price<=0?'-':tp1Price} ｜ 比例 ${tp1Pct}% ｜ 平倉價值 ≈ <b>${tp1CloseValue.toFixed(2)} U</b> ｜ 預期盈利 ≈ <b>${tp1Profit.toFixed(2)} U</b></div>` : ''}
+      ${tp2Pct>0 ? `<div>TP2：價 ${isNaN(tp2Price)||tp2Price<=0?'-':tp2Price} ｜ 比例 ${tp2Pct}% ｜ 平倉價值 ≈ <b>${tp2CloseValue.toFixed(2)} U</b> ｜ 預期盈利 ≈ <b>${tp2Profit.toFixed(2)} U</b></div>` : ''}
+      ${tp3Pct>0 ? `<div>TP3：價 ${isNaN(tp3Price)||tp3Price<=0?'-':tp3Price} ｜ 比例 ${tp3Pct}% ｜ 平倉價值 ≈ <b>${tp3CloseValue.toFixed(2)} U</b> ｜ 預期盈利 ≈ <b>${tp3Profit.toFixed(2)} U</b></div>` : ''}
       ` : ''}
     `;
 
@@ -113,9 +124,9 @@ document.addEventListener("DOMContentLoaded", () => {
       margin: margin.toFixed(2),
       symbol,
       tp: {
-        tp1: { pct: tp1Pct || 0, price: isNaN(tp1Price)? null : tp1Price, closeValue: tp1CloseValue.toFixed(2) },
-        tp2: { pct: tp2Pct || 0, price: isNaN(tp2Price)? null : tp2Price, closeValue: tp2CloseValue.toFixed(2) },
-        tp3: { pct: tp3Pct || 0, price: isNaN(tp3Price)? null : tp3Price, closeValue: tp3CloseValue.toFixed(2) },
+        tp1: { pct: tp1Pct || 0, price: isNaN(tp1Price)? null : tp1Price, closeValue: tp1CloseValue.toFixed(2), profit: tp1Profit.toFixed(2) },
+        tp2: { pct: tp2Pct || 0, price: isNaN(tp2Price)? null : tp2Price, closeValue: tp2CloseValue.toFixed(2), profit: tp2Profit.toFixed(2) },
+        tp3: { pct: tp3Pct || 0, price: isNaN(tp3Price)? null : tp3Price, closeValue: tp3CloseValue.toFixed(2), profit: tp3Profit.toFixed(2) },
         totalPct: Math.min(100, totalClosePct)
       },
       time: new Date().toLocaleString()
@@ -181,9 +192,9 @@ document.addEventListener("DOMContentLoaded", () => {
         🏦 <strong>保證金:</strong> ${r.margin} U<br>
         ${tp ? `
         🎯 <strong>止盈計畫:</strong> 總比例 ${tp.totalPct}%<br>
-        TP1: 價 ${tp.tp1.price ?? '-'}，${tp.tp1.pct}% ，平倉價值 ${tp.tp1.closeValue} U<br>
-        TP2: 價 ${tp.tp2.price ?? '-'}，${tp.tp2.pct}% ，平倉價值 ${tp.tp2.closeValue} U<br>
-        TP3: 價 ${tp.tp3.price ?? '-'}，${tp.tp3.pct}% ，平倉價值 ${tp.tp3.closeValue} U<br>
+        TP1: 價 ${tp.tp1.price ?? '-'}，${tp.tp1.pct}% ，平倉價值 ${tp.tp1.closeValue} U ，預期盈虧 ${tp.tp1.profit ?? '-'} U<br>
+        TP2: 價 ${tp.tp2.price ?? '-'}，${tp.tp2.pct}% ，平倉價值 ${tp.tp2.closeValue} U ，預期盈虧 ${tp.tp2.profit ?? '-'} U<br>
+        TP3: 價 ${tp.tp3.price ?? '-'}，${tp.tp3.pct}% ，平倉價值 ${tp.tp3.closeValue} U ，預期盈虧 ${tp.tp3.profit ?? '-'} U<br>
         ` : ''}
       `;
       // TP 結果 / R：文字檢視 與 編輯模式切換
