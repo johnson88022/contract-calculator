@@ -16,14 +16,14 @@ body {
 .container {
   max-width: 100%;
   margin: 0 auto;
-  padding: 16px 12px;
+  padding: 10px 8px;
   background: #ffffff;
   min-height: 100vh;
 }
 
 h1 {
-  font-size: 22px;
-  margin-bottom: 14px;
+  font-size: 20px;
+  margin-bottom: 10px;
   text-align: center;
   color: #111827;
   font-weight: 700;
@@ -41,15 +41,15 @@ h1 {
 label {
   display: block;
   font-weight: 600;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
   color: #374151;
-  font-size: 15px;
+  font-size: 14px;
 }
 
 input, select {
   width: 100%;
-  padding: 8px 8px;
-  font-size: 15px;
+  padding: 6px 8px;
+  font-size: 14px;
   border: 1px solid #d1d5db;
   border-radius: 6px;
   background: #f9fafb;
@@ -107,12 +107,12 @@ button {
 
 /* 結果區域 */
 #result {
-  margin-top: 10px;
-  padding: 10px;
+  margin-top: 8px;
+  padding: 8px;
   background: #f9fafb;
   color: #111827;
   border-radius: 10px;
-  font-size: 15px;
+  font-size: 14px;
   line-height: 1.6;
   border: 1px solid #e5e7eb;
   text-align: left;
@@ -172,58 +172,20 @@ h2 {
 
 /* 響應式設計 */
 @media (max-width: 480px) {
-  .container {
-    padding: 15px 10px;
-  }
-  
-  h1 {
-    font-size: 22px;
-    margin-bottom: 20px;
-  }
-  
-  .form-group {
-    padding: 12px;
-    margin-bottom: 15px;
-  }
-  
-  input, select {
-    padding: 12px 10px;
-    font-size: 16px;
-  }
-  
-  button {
-    padding: 15px 18px;
-    font-size: 16px;
-  }
-  
-  #result {
-    padding: 15px;
-    font-size: 15px;
-  }
+  .container { padding: 10px 8px; }
+  h1 { font-size: 20px; margin-bottom: 10px; }
+  .form-group { padding: 8px; margin-bottom: 8px; }
+  input, select { padding: 6px 8px; font-size: 14px; }
+  button { padding: 8px 10px; font-size: 14px; }
+  #result { padding: 8px; font-size: 14px; }
 }
 
 @media (max-width: 360px) {
-  .container {
-    padding: 10px 8px;
-  }
-  
-  h1 {
-    font-size: 20px;
-  }
-  
-  .form-group {
-    padding: 10px;
-  }
-  
-  input, select {
-    padding: 10px 8px;
-    font-size: 15px;
-  }
-  
-  button {
-    padding: 12px 15px;
-    font-size: 15px;
-  }
+  .container { padding: 8px 6px; }
+  h1 { font-size: 18px; }
+  .form-group { padding: 6px; }
+  input, select { padding: 6px 6px; font-size: 14px; }
+  button { padding: 8px 10px; font-size: 14px; }
 }
 
 /* 觸控優化 */

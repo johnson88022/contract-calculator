@@ -8,18 +8,23 @@ document.addEventListener("DOMContentLoaded", () => {
   // 止盈方案選單：自動填入 TP 百分比
   const presetEl = document.getElementById("tpPreset");
   if (presetEl) {
+    const updateView = () => {
+      const view = document.getElementById("tpPctView");
+      if (view) view.textContent = `目前比例：${presetPercents.tp1}/${presetPercents.tp2}/${presetPercents.tp3}`;
+    };
     presetEl.addEventListener("change", () => {
       const val = presetEl.value; // e.g., "50-30-20"
-      if (!val) return;
+      if (!val) { presetPercents = { tp1: 0, tp2: 0, tp3: 0 }; updateView(); return; }
       const [p1, p2, p3] = val.split("-").map((v) => parseFloat(v));
       presetPercents = {
         tp1: isNaN(p1) ? 0 : p1,
         tp2: isNaN(p2) ? 0 : p2,
         tp3: isNaN(p3) ? 0 : p3
       };
-      const view = document.getElementById("tpPctView");
-      if (view) view.textContent = `目前比例：${presetPercents.tp1}/${presetPercents.tp2}/${presetPercents.tp3}`;
+      updateView();
     });
+    // 初始就更新一次視圖（避免首次不顯示）
+    updateView();
   }
 
   // 當前選中的比例（預設 0）
@@ -72,16 +77,16 @@ document.addEventListener("DOMContentLoaded", () => {
     const tp3CloseValue = calcTpCloseValue(tp3Pct);
 
     const resultText = `
-      幣種: ${symbol}<br>
-      📉 止損幅度: ${stopPercent}%<br>
-      💰 倉位價值: ${positionValue.toFixed(2)} USDT<br>
-      🏦 需保證金: ${margin.toFixed(2)} USDT<br>
+      <div><strong>幣種</strong>：${symbol}</div>
+      <div><strong>止損幅度</strong>：${stopPercent}%</div>
+      <div><strong>倉位價值</strong>：${positionValue.toFixed(2)} USDT</div>
+      <div><strong>需保證金</strong>：${margin.toFixed(2)} USDT</div>
       ${totalClosePct > 0 ? `
-      <hr>
-      🎯 止盈計畫（總平倉比例: ${Math.min(100, totalClosePct)}%）<br>
-      ${tp1Pct>0 ? `TP1: 價 ${isNaN(tp1Price)||tp1Price<=0?'-':tp1Price} ，比例 ${tp1Pct}% ，平倉價值 ≈ ${tp1CloseValue.toFixed(2)} USDT<br>` : ''}
-      ${tp2Pct>0 ? `TP2: 價 ${isNaN(tp2Price)||tp2Price<=0?'-':tp2Price} ，比例 ${tp2Pct}% ，平倉價值 ≈ ${tp2CloseValue.toFixed(2)} USDT<br>` : ''}
-      ${tp3Pct>0 ? `TP3: 價 ${isNaN(tp3Price)||tp3Price<=0?'-':tp3Price} ，比例 ${tp3Pct}% ，平倉價值 ≈ ${tp3CloseValue.toFixed(2)} USDT` : ''}
+      <div style="margin:6px 0;border-top:1px solid #e5e7eb;"></div>
+      <div><strong>止盈比例</strong>：${tp1Pct}/${tp2Pct}/${tp3Pct}</div>
+      ${tp1Pct>0 ? `<div>TP1：價 ${isNaN(tp1Price)||tp1Price<=0?'-':tp1Price} ｜ 比例 ${tp1Pct}% ｜ 平倉價值 ≈ <b>${tp1CloseValue.toFixed(2)} USDT</b></div>` : ''}
+      ${tp2Pct>0 ? `<div>TP2：價 ${isNaN(tp2Price)||tp2Price<=0?'-':tp2Price} ｜ 比例 ${tp2Pct}% ｜ 平倉價值 ≈ <b>${tp2CloseValue.toFixed(2)} USDT</b></div>` : ''}
+      ${tp3Pct>0 ? `<div>TP3：價 ${isNaN(tp3Price)||tp3Price<=0?'-':tp3Price} ｜ 比例 ${tp3Pct}% ｜ 平倉價值 ≈ <b>${tp3CloseValue.toFixed(2)} USDT</b></div>` : ''}
       ` : ''}
     `;
 
