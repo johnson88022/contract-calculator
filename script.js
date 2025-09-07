@@ -12,14 +12,18 @@ document.addEventListener("DOMContentLoaded", () => {
       const val = presetEl.value; // e.g., "50-30-20"
       if (!val) return;
       const [p1, p2, p3] = val.split("-").map((v) => parseFloat(v));
-      const tp1 = document.getElementById("tp1Pct");
-      const tp2 = document.getElementById("tp2Pct");
-      const tp3 = document.getElementById("tp3Pct");
-      if (tp1) tp1.value = isNaN(p1) ? "" : String(p1);
-      if (tp2) tp2.value = isNaN(p2) ? "" : String(p2);
-      if (tp3) tp3.value = isNaN(p3) ? "" : String(p3);
+      presetPercents = {
+        tp1: isNaN(p1) ? 0 : p1,
+        tp2: isNaN(p2) ? 0 : p2,
+        tp3: isNaN(p3) ? 0 : p3
+      };
+      const view = document.getElementById("tpPctView");
+      if (view) view.textContent = `目前比例：${presetPercents.tp1}/${presetPercents.tp2}/${presetPercents.tp3}`;
     });
   }
+
+  // 當前選中的比例（預設 0）
+  let presetPercents = { tp1: 0, tp2: 0, tp3: 0 };
 
   document.getElementById("calculate").addEventListener("click", () => {
     const L = parseFloat(document.getElementById("leverage").value);
@@ -28,9 +32,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const S = parseFloat(document.getElementById("stop").value);
     const M = parseFloat(document.getElementById("maxLoss").value);
     const symbol = document.getElementById("symbol").value.trim() || "未輸入";
-    const tp1Pct = parseFloat(document.getElementById("tp1Pct")?.value || "0");
-    const tp2Pct = parseFloat(document.getElementById("tp2Pct")?.value || "0");
-    const tp3Pct = parseFloat(document.getElementById("tp3Pct")?.value || "0");
+    const tp1Pct = presetPercents.tp1 || 0;
+    const tp2Pct = presetPercents.tp2 || 0;
+    const tp3Pct = presetPercents.tp3 || 0;
     const tp1Price = parseFloat(document.getElementById("tp1Price")?.value || "0");
     const tp2Price = parseFloat(document.getElementById("tp2Price")?.value || "0");
     const tp3Price = parseFloat(document.getElementById("tp3Price")?.value || "0");

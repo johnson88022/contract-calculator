@@ -18,7 +18,7 @@
 
     <div class="form-group">
       <label>槓桿 (L):</label>
-      <input type="number" id="leverage" value="10" min="1" max="125" title="槓桿倍數">
+      <input type="number" id="leverage" value="20" min="1" max="125" title="槓桿倍數">
     </div>
 
     <div class="form-group">
@@ -51,7 +51,7 @@
 
     <div class="form-group">
       <label>止盈設定 TP1~TP3</label>
-      <div style="margin-bottom:8px;">
+      <div style="display:grid;grid-template-columns:1fr;gap:8px;margin-bottom:8px;">
         <select id="tpPreset" title="止盈比例方案">
           <option value="">選擇方案（可選）</option>
           <option value="50-30-20">方案A（50/30/20）</option>
@@ -60,16 +60,14 @@
           <option value="30-30-40">方案D（30/30/40）</option>
           <option value="33-33-34">方案E（33/33/34）</option>
         </select>
+        <small id="tpPctView" style="color:#6b7280;">目前比例：-- / -- / --</small>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-        <input type="number" id="tp1Pct" min="0" max="100" step="1" placeholder="TP1 比例 %">
         <input type="number" id="tp1Price" step="0.01" placeholder="TP1 價位">
-        <input type="number" id="tp2Pct" min="0" max="100" step="1" placeholder="TP2 比例 %">
         <input type="number" id="tp2Price" step="0.01" placeholder="TP2 價位">
-        <input type="number" id="tp3Pct" min="0" max="100" step="1" placeholder="TP3 比例 %">
         <input type="number" id="tp3Price" step="0.01" placeholder="TP3 價位">
       </div>
-      <small style="color:#64748b;display:block;margin-top:6px;">比例為要在該價位平倉的倉位百分比，總和 ≤ 100%</small>
+      <small style="color:#64748b;display:block;margin-top:6px;">選擇方案後，系統將依比例於各價位平倉。</small>
     </div>
 
     <button id="calculate">🚀 計算倉位</button>
