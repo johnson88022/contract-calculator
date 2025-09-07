@@ -31,10 +31,10 @@ h1 {
 
 /* 表單容器 */
 .form-group {
-  margin-bottom: 10px;
+  margin-bottom: 8px;
   background: #fff;
-  border-radius: 10px;
-  padding: 10px;
+  border-radius: 8px;
+  padding: 8px;
   border: 1px solid #e5e7eb;
 }
 
@@ -48,10 +48,10 @@ label {
 
 input, select {
   width: 100%;
-  padding: 10px 10px;
-  font-size: 16px;
+  padding: 8px 8px;
+  font-size: 15px;
   border: 1px solid #d1d5db;
-  border-radius: 8px;
+  border-radius: 6px;
   background: #f9fafb;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
   -webkit-appearance: none;
@@ -79,14 +79,14 @@ input[type="number"]::-webkit-inner-spin-button {
 /* 按鈕樣式 */
 button {
   width: 100%;
-  padding: 12px 16px;
-  font-size: 16px;
+  padding: 10px 12px;
+  font-size: 15px;
   font-weight: 600;
   border: 1px solid #d1d5db;
-  border-radius: 10px;
+  border-radius: 8px;
   cursor: pointer;
   transition: background-color 0.2s ease, border-color 0.2s ease;
-  margin-top: 8px;
+  margin-top: 6px;
 }
 
 #calculate {
@@ -107,8 +107,8 @@ button {
 
 /* 結果區域 */
 #result {
-  margin-top: 14px;
-  padding: 14px;
+  margin-top: 10px;
+  padding: 10px;
   background: #f9fafb;
   color: #111827;
   border-radius: 10px;

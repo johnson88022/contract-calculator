@@ -5,6 +5,22 @@ document.addEventListener("DOMContentLoaded", () => {
 
   loadHistory();
 
+  // 止盈方案選單：自動填入 TP 百分比
+  const presetEl = document.getElementById("tpPreset");
+  if (presetEl) {
+    presetEl.addEventListener("change", () => {
+      const val = presetEl.value; // e.g., "50-30-20"
+      if (!val) return;
+      const [p1, p2, p3] = val.split("-").map((v) => parseFloat(v));
+      const tp1 = document.getElementById("tp1Pct");
+      const tp2 = document.getElementById("tp2Pct");
+      const tp3 = document.getElementById("tp3Pct");
+      if (tp1) tp1.value = isNaN(p1) ? "" : String(p1);
+      if (tp2) tp2.value = isNaN(p2) ? "" : String(p2);
+      if (tp3) tp3.value = isNaN(p3) ? "" : String(p3);
+    });
+  }
+
   document.getElementById("calculate").addEventListener("click", () => {
     const L = parseFloat(document.getElementById("leverage").value);
     const dir = document.getElementById("direction").value;

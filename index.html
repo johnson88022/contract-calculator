@@ -51,6 +51,16 @@
 
     <div class="form-group">
       <label>止盈設定 TP1~TP3</label>
+      <div style="margin-bottom:8px;">
+        <select id="tpPreset" title="止盈比例方案">
+          <option value="">選擇方案（可選）</option>
+          <option value="50-30-20">方案A（50/30/20）</option>
+          <option value="40-35-25">方案B（40/35/25）</option>
+          <option value="60-30-10">方案C（60/30/10）</option>
+          <option value="30-30-40">方案D（30/30/40）</option>
+          <option value="33-33-34">方案E（33/33/34）</option>
+        </select>
+      </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
         <input type="number" id="tp1Pct" min="0" max="100" step="1" placeholder="TP1 比例 %">
         <input type="number" id="tp1Price" step="0.01" placeholder="TP1 價位">
