@@ -210,20 +210,34 @@ document.addEventListener("DOMContentLoaded", () => {
       const div = document.createElement("div");
       div.className = "history-item";
       const tp = r.tp;
+      const summary = `${r.symbol}｜${r.direction === 'long' ? '做多' : '做空'} ${r.leverage}x｜倉位 ${r.positionValue} U｜保證金 ${r.margin} U｜止損 ${r.stopPercent}%`;
+      const tpTable = tp ? `
+        <table class="tp-table">
+          <thead>
+            <tr><th>TP</th><th>價位</th><th>比例</th><th>平倉價值</th><th>預期盈虧</th></tr>
+          </thead>
+          <tbody>
+            ${(tp.tp1?.pct||0)>0 || tp.tp1?.price ? `<tr><td>TP1</td><td>${tp.tp1.price ?? '-'}</td><td>${tp.tp1.pct}%</td><td>${tp.tp1.closeValue} U</td><td>${tp.tp1.profit ?? '-' } U</td></tr>` : ''}
+            ${(tp.tp2?.pct||0)>0 || tp.tp2?.price ? `<tr><td>TP2</td><td>${tp.tp2.price ?? '-'}</td><td>${tp.tp2.pct}%</td><td>${tp.tp2.closeValue} U</td><td>${tp.tp2.profit ?? '-' } U</td></tr>` : ''}
+            ${(tp.tp3?.pct||0)>0 || tp.tp3?.price ? `<tr><td>TP3</td><td>${tp.tp3.price ?? '-'}</td><td>${tp.tp3.pct}%</td><td>${tp.tp3.closeValue} U</td><td>${tp.tp3.profit ?? '-' } U</td></tr>` : ''}
+          </tbody>
+        </table>
+      ` : '';
+
       div.innerHTML = `
-        <b>${r.time}</b><br>
-        <strong>幣種:</strong> ${r.symbol}<br>
-        <strong>方向:</strong> ${r.direction === 'long' ? '做多 📈' : '做空 📉'}, <strong>槓桿:</strong> ${r.leverage}x<br>
-        <strong>進場:</strong> ${r.entry}, <strong>止損:</strong> ${r.stop}, <strong>允許虧損:</strong> ${r.maxLoss}<br>
-        📉 <strong>止損幅度:</strong> ${r.stopPercent}%<br>
-        💰 <strong>倉位:</strong> ${r.positionValue} U<br>
-        🏦 <strong>保證金:</strong> ${r.margin} U<br>
-        ${tp ? `
-        🎯 <strong>止盈計畫:</strong> 總比例 ${tp.totalPct}%<br>
-        TP1: 價 ${tp.tp1.price ?? '-'}，${tp.tp1.pct}% ，平倉價值 ${tp.tp1.closeValue} U ，預期盈虧 ${tp.tp1.profit ?? '-'} U<br>
-        TP2: 價 ${tp.tp2.price ?? '-'}，${tp.tp2.pct}% ，平倉價值 ${tp.tp2.closeValue} U ，預期盈虧 ${tp.tp2.profit ?? '-'} U<br>
-        TP3: 價 ${tp.tp3.price ?? '-'}，${tp.tp3.pct}% ，平倉價值 ${tp.tp3.closeValue} U ，預期盈虧 ${tp.tp3.profit ?? '-'} U<br>
-        ` : ''}
+        <div style="margin-bottom:6px;"><b>${r.time}</b></div>
+        <details>
+          <summary class="result-summary">${summary}<span class="result-hint">點擊展開詳情</span></summary>
+          <div class="result-details">
+            <div><strong>方向</strong>：${r.direction === 'long' ? '做多 📈' : '做空 📉'}，<strong>槓桿</strong>：${r.leverage}x</div>
+            <div><strong>進場</strong>：${r.entry}｜<strong>止損</strong>：${r.stop}｜<strong>允許虧損</strong>：${r.maxLoss}</div>
+            <div><strong>倉位價值</strong>：${r.positionValue} U｜<strong>需保證金</strong>：${r.margin} U</div>
+            <div><strong>止損幅度</strong>：${r.stopPercent}%</div>
+            ${tp ? `<div style=\"margin:6px 0;border-top:1px solid #e5e7eb;\"></div>` : ''}
+            ${tp ? `<div><strong>止盈比例</strong>：${tp.tp1.pct}/${tp.tp2.pct}/${tp.tp3.pct}</div>` : ''}
+            ${tpTable}
+          </div>
+        </details>
       `;
       // TP 結果 / R：文字檢視 與 編輯模式切換
       const controls = document.createElement("div");
