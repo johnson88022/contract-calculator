@@ -40,16 +40,16 @@ document.addEventListener("DOMContentLoaded", () => {
     const contracts = M / riskPerContract;
 
     // 各 TP 平倉倉位價值（以 USDT 計），用比例占比乘上總倉位價值
-    function calcTpCloseValue(pct, price) {
-      if (!pct || pct <= 0 || isNaN(price) || price <= 0) return 0;
-      // 以倉位價值比例計算要平倉的價值
+    function calcTpCloseValue(pct) {
+      if (!pct || pct <= 0) return 0;
+      // 以倉位價值比例計算要平倉的價值（與目標價無關）
       const closeValue = positionValue * (pct / 100);
       return closeValue;
     }
 
-    const tp1CloseValue = calcTpCloseValue(tp1Pct, tp1Price);
-    const tp2CloseValue = calcTpCloseValue(tp2Pct, tp2Price);
-    const tp3CloseValue = calcTpCloseValue(tp3Pct, tp3Price);
+    const tp1CloseValue = calcTpCloseValue(tp1Pct);
+    const tp2CloseValue = calcTpCloseValue(tp2Pct);
+    const tp3CloseValue = calcTpCloseValue(tp3Pct);
 
     const resultText = `
       幣種: ${symbol}<br>
@@ -59,9 +59,9 @@ document.addEventListener("DOMContentLoaded", () => {
       ${totalClosePct > 0 ? `
       <hr>
       🎯 止盈計畫（總平倉比例: ${Math.min(100, totalClosePct)}%）<br>
-      TP1: ${isNaN(tp1Price) || tp1Price<=0 ? '-' : tp1Price} ，比例 ${tp1Pct || 0}% ，平倉價值 ≈ ${tp1CloseValue.toFixed(2)} USDT<br>
-      TP2: ${isNaN(tp2Price) || tp2Price<=0 ? '-' : tp2Price} ，比例 ${tp2Pct || 0}% ，平倉價值 ≈ ${tp2CloseValue.toFixed(2)} USDT<br>
-      TP3: ${isNaN(tp3Price) || tp3Price<=0 ? '-' : tp3Price} ，比例 ${tp3Pct || 0}% ，平倉價值 ≈ ${tp3CloseValue.toFixed(2)} USDT
+      ${tp1Pct>0 ? `TP1: 價 ${isNaN(tp1Price)||tp1Price<=0?'-':tp1Price} ，比例 ${tp1Pct}% ，平倉價值 ≈ ${tp1CloseValue.toFixed(2)} USDT<br>` : ''}
+      ${tp2Pct>0 ? `TP2: 價 ${isNaN(tp2Price)||tp2Price<=0?'-':tp2Price} ，比例 ${tp2Pct}% ，平倉價值 ≈ ${tp2CloseValue.toFixed(2)} USDT<br>` : ''}
+      ${tp3Pct>0 ? `TP3: 價 ${isNaN(tp3Price)||tp3Price<=0?'-':tp3Price} ，比例 ${tp3Pct}% ，平倉價值 ≈ ${tp3CloseValue.toFixed(2)} USDT` : ''}
       ` : ''}
     `;
 
