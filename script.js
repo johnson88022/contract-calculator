@@ -12,6 +12,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const S = parseFloat(document.getElementById("stop").value);
     const M = parseFloat(document.getElementById("maxLoss").value);
     const symbol = document.getElementById("symbol").value.trim() || "未輸入";
+    const tp1Pct = parseFloat(document.getElementById("tp1Pct")?.value || "0");
+    const tp2Pct = parseFloat(document.getElementById("tp2Pct")?.value || "0");
+    const tp3Pct = parseFloat(document.getElementById("tp3Pct")?.value || "0");
+    const tp1Price = parseFloat(document.getElementById("tp1Price")?.value || "0");
+    const tp2Price = parseFloat(document.getElementById("tp2Price")?.value || "0");
+    const tp3Price = parseFloat(document.getElementById("tp3Price")?.value || "0");
 
     if (isNaN(E) || isNaN(S) || isNaN(M)) {
       resultDiv.innerHTML = "⚠ 請輸入完整數值";
@@ -28,11 +34,35 @@ document.addEventListener("DOMContentLoaded", () => {
     const positionValue = (M / riskPerContract) * E;
     const margin = positionValue / L;
 
+    const totalClosePct = [tp1Pct, tp2Pct, tp3Pct].reduce((a, b) => a + (isNaN(b) ? 0 : b), 0);
+
+    // 開倉張數（合約數）= M / 每合約風險
+    const contracts = M / riskPerContract;
+
+    // 各 TP 平倉倉位價值（以 USDT 計），用比例占比乘上總倉位價值
+    function calcTpCloseValue(pct, price) {
+      if (!pct || pct <= 0 || isNaN(price) || price <= 0) return 0;
+      // 以倉位價值比例計算要平倉的價值
+      const closeValue = positionValue * (pct / 100);
+      return closeValue;
+    }
+
+    const tp1CloseValue = calcTpCloseValue(tp1Pct, tp1Price);
+    const tp2CloseValue = calcTpCloseValue(tp2Pct, tp2Price);
+    const tp3CloseValue = calcTpCloseValue(tp3Pct, tp3Price);
+
     const resultText = `
       幣種: ${symbol}<br>
       📉 止損幅度: ${stopPercent}%<br>
       💰 倉位價值: ${positionValue.toFixed(2)} USDT<br>
-      🏦 需保證金: ${margin.toFixed(2)} USDT
+      🏦 需保證金: ${margin.toFixed(2)} USDT<br>
+      ${totalClosePct > 0 ? `
+      <hr>
+      🎯 止盈計畫（總平倉比例: ${Math.min(100, totalClosePct)}%）<br>
+      TP1: ${isNaN(tp1Price) || tp1Price<=0 ? '-' : tp1Price} ，比例 ${tp1Pct || 0}% ，平倉價值 ≈ ${tp1CloseValue.toFixed(2)} USDT<br>
+      TP2: ${isNaN(tp2Price) || tp2Price<=0 ? '-' : tp2Price} ，比例 ${tp2Pct || 0}% ，平倉價值 ≈ ${tp2CloseValue.toFixed(2)} USDT<br>
+      TP3: ${isNaN(tp3Price) || tp3Price<=0 ? '-' : tp3Price} ，比例 ${tp3Pct || 0}% ，平倉價值 ≈ ${tp3CloseValue.toFixed(2)} USDT
+      ` : ''}
     `;
 
     resultDiv.innerHTML = resultText;
@@ -47,6 +77,12 @@ document.addEventListener("DOMContentLoaded", () => {
       positionValue: positionValue.toFixed(2),
       margin: margin.toFixed(2),
       symbol,
+      tp: {
+        tp1: { pct: tp1Pct || 0, price: isNaN(tp1Price)? null : tp1Price, closeValue: tp1CloseValue.toFixed(2) },
+        tp2: { pct: tp2Pct || 0, price: isNaN(tp2Price)? null : tp2Price, closeValue: tp2CloseValue.toFixed(2) },
+        tp3: { pct: tp3Pct || 0, price: isNaN(tp3Price)? null : tp3Price, closeValue: tp3CloseValue.toFixed(2) },
+        totalPct: Math.min(100, totalClosePct)
+      },
       time: new Date().toLocaleString()
     });
 
@@ -88,6 +124,7 @@ document.addEventListener("DOMContentLoaded", () => {
     history.forEach((r, i) => {
       const div = document.createElement("div");
       div.className = "history-item";
+      const tp = r.tp;
       div.innerHTML = `
         <b>${r.time}</b><br>
         <strong>幣種:</strong> ${r.symbol}<br>
@@ -96,6 +133,12 @@ document.addEventListener("DOMContentLoaded", () => {
         📉 <strong>止損幅度:</strong> ${r.stopPercent}%<br>
         💰 <strong>倉位:</strong> ${r.positionValue} USDT<br>
         🏦 <strong>保證金:</strong> ${r.margin} USDT<br>
+        ${tp ? `
+        🎯 <strong>止盈計畫:</strong> 總比例 ${tp.totalPct}%<br>
+        TP1: 價 ${tp.tp1.price ?? '-'}，${tp.tp1.pct}% ，平倉價值 ${tp.tp1.closeValue} USDT<br>
+        TP2: 價 ${tp.tp2.price ?? '-'}，${tp.tp2.pct}% ，平倉價值 ${tp.tp2.closeValue} USDT<br>
+        TP3: 價 ${tp.tp3.price ?? '-'}，${tp.tp3.pct}% ，平倉價值 ${tp.tp3.closeValue} USDT<br>
+        ` : ''}
       `;
       const btn = document.createElement("button");
       btn.textContent = "🗑️ 刪除";

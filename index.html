@@ -6,6 +6,7 @@
   <title>合約倉位計算器</title>
   <link rel="stylesheet" href="style.css">
   <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon16.png">
   <meta name="theme-color" content="#667eea">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -46,6 +47,19 @@
     <div class="form-group">
       <label>幣種:</label>
       <input type="text" id="symbol" placeholder="例如：BTC/USDT">
+    </div>
+
+    <div class="form-group">
+      <label>止盈設定 TP1~TP3</label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <input type="number" id="tp1Pct" min="0" max="100" step="1" placeholder="TP1 比例 %">
+        <input type="number" id="tp1Price" step="0.01" placeholder="TP1 價位">
+        <input type="number" id="tp2Pct" min="0" max="100" step="1" placeholder="TP2 比例 %">
+        <input type="number" id="tp2Price" step="0.01" placeholder="TP2 價位">
+        <input type="number" id="tp3Pct" min="0" max="100" step="1" placeholder="TP3 比例 %">
+        <input type="number" id="tp3Price" step="0.01" placeholder="TP3 價位">
+      </div>
+      <small style="color:#64748b;display:block;margin-top:6px;">比例為要在該價位平倉的倉位百分比，總和 ≤ 100%</small>
     </div>
 
     <button id="calculate">🚀 計算倉位</button>
