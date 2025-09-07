@@ -40,6 +40,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // 當前選中的比例（上方已宣告）
 
   document.getElementById("calculate").addEventListener("click", () => {
+    try {
     const L = parseFloat(document.getElementById("leverage").value);
     const dir = document.getElementById("direction").value;
     const E = parseFloat(document.getElementById("entry").value);
@@ -121,6 +122,10 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     loadHistory();
+    } catch (err) {
+      console.error(err);
+      resultDiv.innerHTML = "⚠ 計算時發生錯誤，請檢查輸入或重新整理頁面";
+    }
   });
 
   clearBtn.addEventListener("click", () => {
