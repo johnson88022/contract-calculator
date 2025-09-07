@@ -180,41 +180,46 @@ document.addEventListener("DOMContentLoaded", () => {
         TP3: 價 ${tp.tp3.price ?? '-'}，${tp.tp3.pct}% ，平倉價值 ${tp.tp3.closeValue} U<br>
         ` : ''}
       `;
-      // 可編輯：TP 結果 與 R 值
+      // 可編輯：TP 結果(下拉) 與 R 值(數字)，置於刪除鍵左側
       const editWrap = document.createElement("div");
       editWrap.style.display = "grid";
-      editWrap.style.gridTemplateColumns = "1fr 1fr auto";
+      editWrap.style.gridTemplateColumns = "auto auto auto";
       editWrap.style.gap = "6px";
       editWrap.style.marginTop = "6px";
 
-      const tpInput = document.createElement("input");
-      tpInput.type = "text";
-      tpInput.placeholder = "TP 結果(例如: TP2)";
-      tpInput.value = r.tpResult || "";
+      const tpSelect = document.createElement("select");
+      ["", "TP1", "TP2", "TP3", "SL"].forEach(v => {
+        const opt = document.createElement("option");
+        opt.value = v;
+        opt.textContent = v === "" ? "選擇結果" : v;
+        if ((r.tpOutcome || "") === v) opt.selected = true;
+        tpSelect.appendChild(opt);
+      });
 
       const rInput = document.createElement("input");
       rInput.type = "number";
       rInput.step = "0.01";
-      rInput.placeholder = "R 值";
-      rInput.value = r.rValue || "";
-
-      const saveBtn = document.createElement("button");
-      saveBtn.textContent = "保存";
-      saveBtn.addEventListener("click", () => {
-        updateRecord(i, { tpResult: tpInput.value.trim(), rValue: rInput.value === '' ? null : parseFloat(rInput.value) });
-        loadHistory();
-      });
-
-      editWrap.appendChild(tpInput);
-      editWrap.appendChild(rInput);
-      editWrap.appendChild(saveBtn);
-      div.appendChild(editWrap);
+      rInput.placeholder = "R";
+      rInput.value = (r.rValue ?? "");
 
       const delBtn = document.createElement("button");
       delBtn.textContent = "🗑️ 刪除";
-      delBtn.style.marginTop = "6px";
       delBtn.addEventListener("click", () => deleteRecord(i));
-      div.appendChild(delBtn);
+
+      const persist = () => {
+        const next = {
+          tpOutcome: tpSelect.value || null,
+          rValue: rInput.value === '' ? null : parseFloat(rInput.value)
+        };
+        updateRecord(i, next);
+      };
+      tpSelect.addEventListener("change", persist);
+      rInput.addEventListener("blur", persist);
+
+      editWrap.appendChild(tpSelect);
+      editWrap.appendChild(rInput);
+      editWrap.appendChild(delBtn);
+      div.appendChild(editWrap);
       historyDiv.appendChild(div);
     });
   }
