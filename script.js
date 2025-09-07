@@ -2,6 +2,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const resultDiv = document.getElementById("result");
   const historyDiv = document.getElementById("history");
   const clearBtn = document.getElementById("clearHistory");
+  // 當前選中的比例（預設 0）- 提前宣告避免初次更新視圖報錯
+  let presetPercents = { tp1: 0, tp2: 0, tp3: 0 };
   // 簡易封裝：取得/寫入歷史紀錄
   function getHistory() {
     return JSON.parse(localStorage.getItem("calcHistory") || "[]");
@@ -35,8 +37,7 @@ document.addEventListener("DOMContentLoaded", () => {
     updateView();
   }
 
-  // 當前選中的比例（預設 0）
-  let presetPercents = { tp1: 0, tp2: 0, tp3: 0 };
+  // 當前選中的比例（上方已宣告）
 
   document.getElementById("calculate").addEventListener("click", () => {
     const L = parseFloat(document.getElementById("leverage").value);
@@ -92,9 +93,9 @@ document.addEventListener("DOMContentLoaded", () => {
       ${totalClosePct > 0 ? `
       <div style="margin:6px 0;border-top:1px solid #e5e7eb;"></div>
       <div><strong>止盈比例</strong>：${tp1Pct}/${tp2Pct}/${tp3Pct}</div>
-      ${tp1Pct>0 ? `<div>TP1：價 ${isNaN(tp1Price)||tp1Price<=0?'-':tp1Price} ｜ 比例 ${tp1Pct}% ｜ 平倉價值 ≈ <b>${tp1CloseValue.toFixed(2)} USDT</b></div>` : ''}
-      ${tp2Pct>0 ? `<div>TP2：價 ${isNaN(tp2Price)||tp2Price<=0?'-':tp2Price} ｜ 比例 ${tp2Pct}% ｜ 平倉價值 ≈ <b>${tp2CloseValue.toFixed(2)} USDT</b></div>` : ''}
-      ${tp3Pct>0 ? `<div>TP3：價 ${isNaN(tp3Price)||tp3Price<=0?'-':tp3Price} ｜ 比例 ${tp3Pct}% ｜ 平倉價值 ≈ <b>${tp3CloseValue.toFixed(2)} USDT</b></div>` : ''}
+      ${tp1Pct>0 ? `<div>TP1：價 ${isNaN(tp1Price)||tp1Price<=0?'-':tp1Price} ｜ 比例 ${tp1Pct}% ｜ 平倉價值 ≈ <b>${tp1CloseValue.toFixed(2)} U</b></div>` : ''}
+      ${tp2Pct>0 ? `<div>TP2：價 ${isNaN(tp2Price)||tp2Price<=0?'-':tp2Price} ｜ 比例 ${tp2Pct}% ｜ 平倉價值 ≈ <b>${tp2CloseValue.toFixed(2)} U</b></div>` : ''}
+      ${tp3Pct>0 ? `<div>TP3：價 ${isNaN(tp3Price)||tp3Price<=0?'-':tp3Price} ｜ 比例 ${tp3Pct}% ｜ 平倉價值 ≈ <b>${tp3CloseValue.toFixed(2)} U</b></div>` : ''}
       ` : ''}
     `;
 
