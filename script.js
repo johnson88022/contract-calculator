@@ -98,18 +98,30 @@ document.addEventListener("DOMContentLoaded", () => {
     const tp2Profit = calcTpProfit(tp2Price);
     const tp3Profit = calcTpProfit(tp3Price);
 
-    const resultText = `
-      <div><strong>幣種</strong>：${symbol}</div>
+    const summaryLine = `${symbol}｜${dir === 'long' ? '做多' : '做空'} ${L}x｜倉位 ${positionValue.toFixed(2)} U｜保證金 ${margin.toFixed(2)} U｜止損 ${stopPercent}%`;
+
+    const detailsBlock = `
+      <div><strong>方向</strong>：${dir === 'long' ? '做多 📈' : '做空 📉'}，<strong>槓桿</strong>：${L}x</div>
+      <div><strong>進場</strong>：${E}｜<strong>止損</strong>：${S}｜<strong>允許虧損</strong>：${M}</div>
+      <div><strong>倉位價值</strong>：${positionValue.toFixed(2)} U｜<strong>需保證金</strong>：${margin.toFixed(2)} U</div>
       <div><strong>止損幅度</strong>：${stopPercent}%</div>
-      <div><strong>倉位價值</strong>：${positionValue.toFixed(2)} U</div>
-      <div><strong>需保證金</strong>：${margin.toFixed(2)} U</div>
       ${showTPBlock ? `
-      <div style="margin:6px 0;border-top:1px solid #e5e7eb;"></div>
-      <div><strong>止盈比例</strong>：${tp1Pct}/${tp2Pct}/${tp3Pct}</div>
-      ${tp1Pct>0 ? `<div>TP1：價 ${isNaN(tp1Price)||tp1Price<=0?'-':tp1Price} ｜ 比例 ${tp1Pct}% ｜ 平倉價值 ≈ <b>${tp1CloseValue.toFixed(2)} U</b> ｜ 預期盈利 ≈ <b>${tp1Profit.toFixed(2)} U</b></div>` : ''}
-      ${tp2Pct>0 ? `<div>TP2：價 ${isNaN(tp2Price)||tp2Price<=0?'-':tp2Price} ｜ 比例 ${tp2Pct}% ｜ 平倉價值 ≈ <b>${tp2CloseValue.toFixed(2)} U</b> ｜ 預期盈利 ≈ <b>${tp2Profit.toFixed(2)} U</b></div>` : ''}
-      ${tp3Pct>0 ? `<div>TP3：價 ${isNaN(tp3Price)||tp3Price<=0?'-':tp3Price} ｜ 比例 ${tp3Pct}% ｜ 平倉價值 ≈ <b>${tp3CloseValue.toFixed(2)} U</b> ｜ 預期盈利 ≈ <b>${tp3Profit.toFixed(2)} U</b></div>` : ''}
+        <div style="margin:6px 0;border-top:1px solid #e5e7eb;"></div>
+        <div><strong>止盈比例</strong>：${tp1Pct}/${tp2Pct}/${tp3Pct}</div>
+        ${tp1Pct>0 ? `<div>TP1：價 ${isNaN(tp1Price)||tp1Price<=0?'-':tp1Price} ｜ 比例 ${tp1Pct}% ｜ 平倉價值 ≈ <b>${tp1CloseValue.toFixed(2)} U</b> ｜ 預期盈利 ≈ <b>${tp1Profit.toFixed(2)} U</b></div>` : ''}
+        ${tp2Pct>0 ? `<div>TP2：價 ${isNaN(tp2Price)||tp2Price<=0?'-':tp2Price} ｜ 比例 ${tp2Pct}% ｜ 平倉價值 ≈ <b>${tp2CloseValue.toFixed(2)} U</b> ｜ 預期盈利 ≈ <b>${tp2Profit.toFixed(2)} U</b></div>` : ''}
+        ${tp3Pct>0 ? `<div>TP3：價 ${isNaN(tp3Price)||tp3Price<=0?'-':tp3Price} ｜ 比例 ${tp3Pct}% ｜ 平倉價值 ≈ <b>${tp3CloseValue.toFixed(2)} U</b> ｜ 預期盈利 ≈ <b>${tp3Profit.toFixed(2)} U</b></div>` : ''}
       ` : ''}
+    `;
+
+    const resultText = `
+      <details>
+        <summary style="cursor:pointer;outline:none;list-style:none;">
+          <span style="display:inline-block;font-weight:600;">${summaryLine}</span>
+          <span style="color:#6b7280;margin-left:6px;">點擊展開詳情</span>
+        </summary>
+        <div style="margin-top:8px;">${detailsBlock}</div>
+      </details>
     `;
 
     resultDiv.innerHTML = resultText;
