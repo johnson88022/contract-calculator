@@ -12,6 +12,17 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="倉位計算器">
 </head>
+<script>
+// 備用計算按鈕處理
+if (typeof calculatePosition === 'undefined') {
+    console.log("設置備用計算處理");
+    
+    document.getElementById('calculate').addEventListener('click', function() {
+        alert('計算功能正在初始化，請稍後再試');
+        location.reload();
+    });
+}
+</script>
 <body>
   <div class="container">
     <h1>合約倉位計算器</h1>
