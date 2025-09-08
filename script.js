@@ -27,6 +27,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const exportBtn = document.getElementById('exportHistory');
   const importBtn = document.getElementById('importHistoryBtn');
   const importFile = document.getElementById('importHistory');
+  const cloudBtn = document.getElementById('cloudConfigBtn');
   if (exportBtn) {
     exportBtn.addEventListener('click', () => {
       const email = localStorage.getItem('sessionUser') || 'guest';
@@ -59,6 +60,94 @@ document.addEventListener("DOMContentLoaded", () => {
       reader.readAsText(file);
     });
   }
+
+  // ====== 雲端同步（GitHub Repo）設定 UI ======
+  function getCloudCfg() {
+    return JSON.parse(localStorage.getItem('cloudCfg') || '{}');
+  }
+  function setCloudCfg(cfg) {
+    localStorage.setItem('cloudCfg', JSON.stringify(cfg || {}));
+  }
+  function openCloudModal() {
+    const cfg = getCloudCfg();
+    const overlay = document.createElement('div'); overlay.className = 'cloud-modal';
+    const card = document.createElement('div'); card.className = 'cloud-card';
+    card.innerHTML = `
+      <h3>雲端同步設定（GitHub Repo）</h3>
+      <div class="row"><label>Owner</label><input id="cfgOwner" value="${cfg.owner||''}" placeholder="johnson88022"></div>
+      <div class="row"><label>Repo</label><input id="cfgRepo" value="${cfg.repo||''}" placeholder="contract-db"></div>
+      <div class="row"><label>Token</label><input id="cfgToken" value="${cfg.token||''}" placeholder="PAT，不會上傳"></div>
+      <div class="cloud-actions">
+        <button id="cfgSave">保存</button>
+        <button id="cfgClose">關閉</button>
+      </div>
+      <small style="color:#6b7280;">資料路徑：db/users/&lt;email&gt;.json（分支 main）</small>
+    `;
+    overlay.appendChild(card); document.body.appendChild(overlay);
+    card.querySelector('#cfgClose').onclick = () => document.body.removeChild(overlay);
+    card.querySelector('#cfgSave').onclick = () => {
+      const next = {
+        owner: card.querySelector('#cfgOwner').value.trim(),
+        repo: card.querySelector('#cfgRepo').value.trim(),
+        token: card.querySelector('#cfgToken').value.trim()
+      };
+      setCloudCfg(next);
+      alert('已保存');
+      document.body.removeChild(overlay);
+      // 立即嘗試拉雲端覆蓋本機
+      syncFromCloud().then(loadHistory);
+    };
+  }
+  if (cloudBtn) cloudBtn.addEventListener('click', openCloudModal);
+
+  // ====== 雲端同步核心 ======
+  async function ghHeaders() {
+    const cfg = getCloudCfg();
+    if (!cfg.token) return null;
+    return { 'Authorization': `Bearer ${cfg.token}`, 'User-Agent': 'sync-client', 'Content-Type': 'application/json' };
+  }
+  function ghPath(email) { return `db/users/${email}.json`; }
+  async function fetchCloud() {
+    const cfg = getCloudCfg(); const h = await ghHeaders(); if (!h) return null;
+    const email = localStorage.getItem('sessionUser'); if (!email) return null;
+    const url = `https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/${ghPath(email)}?ref=main`;
+    const res = await fetch(url, { headers: h });
+    if (res.status === 404) return { sha:null, history: [] };
+    if (!res.ok) throw new Error('fetchCloud failed');
+    const json = await res.json();
+    const content = atob(json.content.replace(/\n/g,''));
+    return { sha: json.sha, history: JSON.parse(content||'[]') };
+  }
+  async function pushCloud(nextHistory, prevSha) {
+    const cfg = getCloudCfg(); const h = await ghHeaders(); if (!h) return false;
+    const email = localStorage.getItem('sessionUser'); if (!email) return false;
+    const url = `https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/${ghPath(email)}`;
+    const contentB64 = btoa(unescape(encodeURIComponent(JSON.stringify(nextHistory))));
+    const body = { message: 'sync history', content: contentB64, branch: 'main' };
+    if (prevSha) body.sha = prevSha;
+    const res = await fetch(url, { method: 'PUT', headers: h, body: JSON.stringify(body) });
+    if (!res.ok) throw new Error('pushCloud failed');
+    return true;
+  }
+  async function syncFromCloud() {
+    try {
+      const remote = await fetchCloud(); if (!remote) return;
+      setHistory(Array.isArray(remote.history) ? remote.history : []);
+    } catch (e) {
+      console.warn('syncFromCloud error', e);
+    }
+  }
+  async function syncToCloud() {
+    try {
+      const email = localStorage.getItem('sessionUser'); if (!email) return;
+      const remote = await fetchCloud();
+      const local = getHistory();
+      await pushCloud(local, remote?.sha || null);
+    } catch (e) { console.warn('syncToCloud error', e); }
+  }
+
+  // 初次載入嘗試雲端覆蓋本機（若有設定）
+  syncFromCloud().then(loadHistory);
   // 當前選中的比例（預設 0）- 提前宣告避免初次更新視圖報錯
   let presetPercents = { tp1: 0, tp2: 0, tp3: 0 };
   // 簡易封裝：取得/寫入歷史紀錄
@@ -244,6 +333,7 @@ document.addEventListener("DOMContentLoaded", () => {
     history.unshift(record);
     if (history.length > 20) history = history.slice(0, 20);
     setHistory(history);
+    syncToCloud();
   }
 
   function deleteRecord(index) {
@@ -251,6 +341,7 @@ document.addEventListener("DOMContentLoaded", () => {
       let history = getHistory();
       history.splice(index, 1);
       setHistory(history);
+      syncToCloud();
       loadHistory();
     });
   }

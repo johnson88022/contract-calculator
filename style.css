@@ -133,6 +133,19 @@ button {
 .result-details {
   margin-top: 8px;
 }
+.cloud-modal {
+  position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.4); z-index: 9999;
+}
+.cloud-card {
+  background: #fff; padding: 16px; border-radius: 10px; width: 92%; max-width: 420px;
+  border: 1px solid #e5e7eb;
+}
+.cloud-card h3 { margin: 0 0 10px 0; font-size: 16px; color:#111827; }
+.row { display: grid; grid-template-columns: 90px 1fr; gap: 8px; align-items: center; margin-bottom: 8px; }
+.row label { font-weight: 600; font-size: 14px; color:#374151; }
+.row input { padding: 8px; font-size: 14px; }
+.cloud-actions { display:flex; gap:8px; justify-content:flex-end; margin-top: 10px; }
 .tp-table {
   width: 100%;
   border-collapse: collapse;
