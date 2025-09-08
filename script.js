@@ -87,7 +87,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const tp2CloseValue = calcTpCloseValue(tp2Pct);
     const tp3CloseValue = calcTpCloseValue(tp3Pct);
 
-    // 各 TP 累計預期盈利（以 U 計）
+    // 各 TP 預期盈利（以 U 計）：依各 TP 自身平倉比例計算，不累加
     function calcChangePct(tpPrice) {
       if (isNaN(tpPrice) || tpPrice <= 0) return 0;
       return dir === "long" ? (tpPrice - E) / E : (E - tpPrice) / E;
@@ -95,13 +95,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const p1 = Math.max(0, (tp1Pct || 0)) / 100;
     const p2 = Math.max(0, (tp2Pct || 0)) / 100;
     const p3 = Math.max(0, (tp3Pct || 0)) / 100;
-    const cum1 = Math.min(1, p1);
-    const cum2 = Math.min(1, p1 + p2);
-    const cum3 = Math.min(1, p1 + p2 + p3);
 
-    const tp1Profit = positionValue * cum1 * calcChangePct(tp1Price);
-    const tp2Profit = positionValue * cum2 * calcChangePct(tp2Price);
-    const tp3Profit = positionValue * cum3 * calcChangePct(tp3Price);
+    const tp1Profit = positionValue * p1 * calcChangePct(tp1Price);
+    const tp2Profit = positionValue * p2 * calcChangePct(tp2Price);
+    const tp3Profit = positionValue * p3 * calcChangePct(tp3Price);
 
     const summaryLine = `${symbol}｜${dir === 'long' ? '做多' : '做空'} ${L}x｜倉位 ${positionValue.toFixed(2)} U｜保證金 ${margin.toFixed(2)} U｜止損 ${stopPercent}%`;
 
