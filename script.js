@@ -498,6 +498,7 @@ document.addEventListener("DOMContentLoaded", () => {
     historyDiv.innerHTML = "";
 
     history.forEach((r, i) => {
+      try {
       const div = document.createElement("div");
       div.dataset.time = r.time;
       div.className = "history-item";
@@ -622,6 +623,9 @@ document.addEventListener("DOMContentLoaded", () => {
       controls.appendChild(delBtn);
       div.appendChild(controls);
       historyDiv.appendChild(div);
+      } catch (e) {
+        console.warn('Failed to render history item', { item: r, error: e });
+      }
     });
   }
 
