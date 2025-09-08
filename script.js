@@ -1,15 +1,37 @@
 document.addEventListener("DOMContentLoaded", () => {
+  // 未登入導向登入頁
+  const currentUser = localStorage.getItem('sessionUser');
+  if (!currentUser) {
+    if (location.pathname.endsWith('index.html') || location.pathname === '/' || location.pathname === '') {
+      location.href = 'login.html';
+      return;
+    }
+  }
   const resultDiv = document.getElementById("result");
   const historyDiv = document.getElementById("history");
   const clearBtn = document.getElementById("clearHistory");
+  const userInfoEl = document.getElementById('userInfo');
+  const logoutBtn = document.getElementById('logoutBtn');
+  if (userInfoEl) {
+    const email = localStorage.getItem('sessionUser');
+    userInfoEl.textContent = email ? `已登入：${email}` : '未登入';
+  }
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', () => {
+      localStorage.removeItem('sessionUser');
+      location.href = 'login.html';
+    });
+  }
   // 當前選中的比例（預設 0）- 提前宣告避免初次更新視圖報錯
   let presetPercents = { tp1: 0, tp2: 0, tp3: 0 };
   // 簡易封裝：取得/寫入歷史紀錄
   function getHistory() {
-    return JSON.parse(localStorage.getItem("calcHistory") || "[]");
+    const email = localStorage.getItem('sessionUser') || 'guest';
+    return JSON.parse(localStorage.getItem(`calcHistory:${email}`) || "[]");
   }
   function setHistory(list) {
-    localStorage.setItem("calcHistory", JSON.stringify(list));
+    const email = localStorage.getItem('sessionUser') || 'guest';
+    localStorage.setItem(`calcHistory:${email}`, JSON.stringify(list));
   }
 
 
