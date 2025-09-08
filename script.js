@@ -393,10 +393,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (clearBtn) {
     clearBtn.addEventListener("click", () => {
-      showConfirm("確定要清除全部紀錄嗎？", () => {
-        setHistory([]);
-        syncToCloud();
-        loadHistory();
+      showConfirm("確定要清除全部紀錄嗎？", async () => {
+        // 使用更穩健的清除流程
+        try {
+          stopPolling();
+          setHistory([]);
+          const latest = await fetchCloud();
+          await pushCloud([], latest?.sha || getSavedSha());
+          if (bc) bc.postMessage('refresh-history');
+        } catch(e) { console.warn(e); }
+        finally { loadHistory(); startPolling(); }
       });
     });
   }
