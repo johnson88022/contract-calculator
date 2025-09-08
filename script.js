@@ -96,9 +96,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const p2 = Math.max(0, (tp2Pct || 0)) / 100;
     const p3 = Math.max(0, (tp3Pct || 0)) / 100;
 
-    const tp1Profit = positionValue * p1 * calcChangePct(tp1Price);
-    const tp2Profit = positionValue * p2 * calcChangePct(tp2Price);
-    const tp3Profit = positionValue * p3 * calcChangePct(tp3Price);
+    const seg1 = positionValue * p1 * calcChangePct(tp1Price);
+    const seg2 = positionValue * p2 * calcChangePct(tp2Price);
+    const seg3 = positionValue * p3 * calcChangePct(tp3Price);
+
+    const tp1Profit = seg1;
+    const tp2Profit = seg1 + seg2;
+    const tp3Profit = seg1 + seg2 + seg3;
 
     const summaryLine = `${symbol}｜${dir === 'long' ? '做多' : '做空'} ${L}x｜倉位 ${positionValue.toFixed(2)} U｜保證金 ${margin.toFixed(2)} U｜止損 ${stopPercent}%`;
 
