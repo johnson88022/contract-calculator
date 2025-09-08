@@ -165,8 +165,8 @@ document.addEventListener("DOMContentLoaded", () => {
       for (const l of localList) {
         const r = byTime.get(l.time);
         if (!r) { byTime.set(l.time, l); continue; }
-        const ru = r.updatedAt || 0, lu = l.updatedAt || 0;
-        if (lu > ru) byTime.set(l.time, l);
+        const ru = r.updatedAt || '1970-01-01T00:00:00.000Z', lu = l.updatedAt || '1970-01-01T00:00:00.000Z';
+        if (new Date(lu) > new Date(ru)) byTime.set(l.time, l);
       }
       const merged = Array.from(byTime.values()).sort((a,b)=> new Date(b.time) - new Date(a.time));
       setHistory(merged);
@@ -381,7 +381,7 @@ document.addEventListener("DOMContentLoaded", () => {
         tp3: { pct: tp3Pct || 0, price: isNaN(tp3Price)? null : tp3Price, closeValue: tp3CloseValue.toFixed(2), profit: isNaN(tp3Profit)? null : tp3Profit.toFixed(2) },
         totalPct: Math.min(100, totalClosePct)
       },
-      time: new Date().toLocaleString()
+      time: new Date().toISOString()
     });
 
     loadHistory();
@@ -409,7 +409,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function saveResult(record) {
     let history = getHistory();
-    record.updatedAt = Date.now();
+    record.updatedAt = new Date().toISOString();
     history.unshift(record);
     if (history.length > 20) history = history.slice(0, 20);
     setHistory(history);
@@ -417,26 +417,57 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function deleteRecord(index) {
-    showConfirm("確定要刪除此紀錄嗎？", () => {
-      (async () => {
-        try {
-          stopPolling();
-          let history = getHistory();
-          history.splice(index, 1);
-          setHistory(history);
-          const latest = await fetchCloud();
-          await pushCloud(getHistory(), latest?.sha || getSavedSha());
-          if (bc) bc.postMessage('refresh-history');
-        } catch(e) { console.warn('delete sync failed', e); }
-        finally { loadHistory(); startPolling(); }
-      })();
+    showConfirm("確定要刪除此紀錄嗎？", async () => {
+      let localHistory = getHistory();
+      const itemToDelete = localHistory[index];
+      if (!itemToDelete) return;
+
+      // Optimistic UI update
+      localHistory.splice(index, 1);
+      setHistory(localHistory);
+      loadHistory();
+
+      // Sync deletion to cloud robustly
+      try {
+        stopPolling();
+        const remote = await fetchCloud();
+        const remoteList = Array.isArray(remote?.history) ? remote.history : [];
+        
+        // Merge remote changes with current local changes
+        const byTime = new Map();
+        for (const r of remoteList) byTime.set(r.time, r);
+        // Use getHistory() to ensure we have the version with the item already removed
+        for (const l of getHistory()) {
+          const r = byTime.get(l.time);
+          const ru = r?.updatedAt || '1970-01-01T00:00:00.000Z';
+          const lu = l.updatedAt || '1970-01-01T00:00:00.000Z';
+          if (!r || (new Date(lu) > new Date(ru))) {
+             byTime.set(l.time, l);
+          }
+        }
+
+        // From the merged list, ensure the target item is deleted, then sort
+        byTime.delete(itemToDelete.time);
+        const finalHistory = Array.from(byTime.values()).sort((a, b) => new Date(b.time) - new Date(a.time));
+        
+        await pushCloud(finalHistory, remote?.sha || getSavedSha());
+        setHistory(finalHistory);
+        if (bc) bc.postMessage('refresh-history');
+
+      } catch (e) {
+        console.warn('delete sync failed', e);
+        // On failure, sync from cloud to restore consistency
+        syncFromCloud().then(() => loadHistory());
+      } finally {
+        startPolling();
+      }
     });
   }
 
   function updateRecord(index, fields) {
     const history = getHistory();
     if (!history[index]) return;
-    history[index] = { ...history[index], ...fields, updatedAt: Date.now() };
+    history[index] = { ...history[index], ...fields, updatedAt: new Date().toISOString() };
     setHistory(history);
     // 將編輯結果同步到雲端，避免重新整理後被雲端覆蓋而消失
     if (typeof syncToCloud === 'function') {
