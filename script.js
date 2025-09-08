@@ -146,7 +146,18 @@ document.addEventListener("DOMContentLoaded", () => {
   async function syncFromCloud() {
     try {
       const remote = await fetchCloud(); if (!remote) return;
-      setHistory(Array.isArray(remote.history) ? remote.history : []);
+      const remoteList = Array.isArray(remote.history) ? remote.history : [];
+      const localList = getHistory();
+      const byTime = new Map();
+      for (const r of remoteList) byTime.set(r.time, r);
+      for (const l of localList) {
+        const r = byTime.get(l.time);
+        if (!r) { byTime.set(l.time, l); continue; }
+        const ru = r.updatedAt || 0, lu = l.updatedAt || 0;
+        if (lu > ru) byTime.set(l.time, l);
+      }
+      const merged = Array.from(byTime.values()).sort((a,b)=> new Date(b.time) - new Date(a.time));
+      setHistory(merged);
     } catch (e) {
       console.warn('syncFromCloud error', e);
     }
@@ -345,6 +356,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function saveResult(record) {
     let history = getHistory();
+    record.updatedAt = Date.now();
     history.unshift(record);
     if (history.length > 20) history = history.slice(0, 20);
     setHistory(history);
@@ -364,7 +376,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function updateRecord(index, fields) {
     const history = getHistory();
     if (!history[index]) return;
-    history[index] = { ...history[index], ...fields };
+    history[index] = { ...history[index], ...fields, updatedAt: Date.now() };
     setHistory(history);
     // 將編輯結果同步到雲端，避免重新整理後被雲端覆蓋而消失
     if (typeof syncToCloud === 'function') {
