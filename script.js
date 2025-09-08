@@ -124,8 +124,10 @@ document.addEventListener("DOMContentLoaded", () => {
     if (res.status === 404) return { sha:null, history: [] };
     if (!res.ok) throw new Error('fetchCloud failed');
     const json = await res.json();
-    const content = atob(json.content.replace(/\n/g,''));
-    return { sha: json.sha, history: JSON.parse(content||'[]') };
+    // GitHub API 回傳的 content 為 base64（UTF-8）；需 decodeURIComponent 避免中文亂碼
+    const raw = atob(json.content.replace(/\n/g, ''));
+    const utf8 = decodeURIComponent(escape(raw));
+    return { sha: json.sha, history: JSON.parse(utf8 || '[]') };
   }
   async function pushCloud(nextHistory, prevSha) {
     const cfg = getCloudCfg(); const h = await ghHeaders(); if (!h) return false;
