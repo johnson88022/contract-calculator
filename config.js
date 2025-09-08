@@ -5,7 +5,7 @@ window.APP_CONFIG = {
   // 添加同步配置
   sync: {
     enabled: true,
-    interval: 5000, //5秒同步一次
+    interval: 30000, // 30秒同步一次
     onVisibilityChange: true // 頁面可見時同步
   }
 };
