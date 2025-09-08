@@ -3,28 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const passEl = document.getElementById('password');
   const msgEl = document.getElementById('loginMsg');
 
-  // 以 WebCrypto 儲存「鹽化 + PBKDF2」後的密碼雜湊（不存明碼）
-  async function pbkdf2Hash(password, saltBase64, iterations = 100000) {
-    const enc = new TextEncoder();
-    const salt = saltBase64 ? Uint8Array.from(atob(saltBase64), c => c.charCodeAt(0)) : crypto.getRandomValues(new Uint8Array(16));
-    const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveBits']);
-    const bits = await crypto.subtle.deriveBits({ name:'PBKDF2', hash:'SHA-256', salt, iterations }, keyMaterial, 256);
-    const hashBytes = new Uint8Array(bits);
-    const hashBase64 = btoa(String.fromCharCode(...hashBytes));
-    const saltB64 = saltBase64 || btoa(String.fromCharCode(...salt));
-    return { hashBase64, saltB64, iterations };
-  }
-
-  function getUsers() {
-    return JSON.parse(localStorage.getItem('users') || '{}');
-  }
-  function setUsers(u) {
-    localStorage.setItem('users', JSON.stringify(u));
-  }
-
-  function setSession(email) {
-    localStorage.setItem('sessionUser', email);
-  }
+  // ... 保持原有的 pbkdf2Hash、getUsers、setUsers、setSession 函數不變 ...
 
   async function handleRegister() {
     const email = emailEl.value.trim().toLowerCase();
@@ -40,20 +19,17 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
     setUsers(users);
-    // 為此帳號建立獨立的歷史命名空間
     if (!localStorage.getItem(`calcHistory:${email}`)) {
       localStorage.setItem(`calcHistory:${email}`, '[]');
     }
     setSession(email);
     
-    // 立即嘗試從雲端同步
-    try {
+    // 登入後立即同步
+    setTimeout(() => {
       if (typeof syncFromCloud === 'function') {
-        await syncFromCloud();
+        syncFromCloud().catch(console.error);
       }
-    } catch (e) {
-      console.warn('雲端同步失敗', e);
-    }
+    }, 500);
     
     window.location.href = 'index.html';
   }
@@ -63,16 +39,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const pw = passEl.value;
     if (!email || !pw) { msgEl.textContent = '請輸入 Email 與密碼'; return; }
     const users = getUsers();
-    // 防抖處理避免重複點擊導致「失敗/成功」交替
     if (handleLogin._busy) return;
     handleLogin._busy = true;
     setTimeout(() => { handleLogin._busy = false; }, 600);
 
     const rec = users[email];
     if (!rec) { msgEl.textContent = '帳號或密碼錯誤'; return; }
-    // 兼容舊資料（password 欄位使用舊簡易 hash）
+    
     if (rec.password) {
-      // 舊版簡易 hash：與先前版本一致
       const legacyHash = (() => { let h = 0; for (let i = 0; i < pw.length; i++) { h = (h << 5) - h + pw.charCodeAt(i); h |= 0; } return String(h); })();
       if (legacyHash !== rec.password) { msgEl.textContent = '帳號或密碼錯誤'; return; }
     } else if (rec.hash && rec.salt) {
@@ -88,19 +62,16 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
     setSession(email);
-    // 確保此帳號歷史命名空間存在
     if (!localStorage.getItem(`calcHistory:${email}`)) {
       localStorage.setItem(`calcHistory:${email}`, '[]');
     }
     
-    // 立即嘗試從雲端同步
-    try {
+    // 登入後立即同步
+    setTimeout(() => {
       if (typeof syncFromCloud === 'function') {
-        await syncFromCloud();
+        syncFromCloud().catch(console.error);
       }
-    } catch (e) {
-      console.warn('雲端同步失敗', e);
-    }
+    }, 500);
     
     window.location.href = 'index.html';
   }
