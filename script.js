@@ -184,6 +184,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // 初次載入嘗試雲端覆蓋本機（若有設定）
   syncFromCloud().then(loadHistory);
+
+  // 加速跨裝置刷新：前景時每 4 秒拉取一次雲端並合併；切回頁面時立即刷新
+  const POLL_MS = 4000;
+  let pollTimer = null;
+  function startPolling() {
+    if (pollTimer) return;
+    pollTimer = setInterval(() => { syncFromCloud().then(loadHistory); }, POLL_MS);
+  }
+  function stopPolling() {
+    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      syncFromCloud().then(loadHistory);
+      startPolling();
+    } else {
+      stopPolling();
+    }
+  });
+  if (document.visibilityState === 'visible') startPolling();
   // 當前選中的比例（預設 0）- 提前宣告避免初次更新視圖報錯
   let presetPercents = { tp1: 0, tp2: 0, tp3: 0 };
   // 簡易封裝：取得/寫入歷史紀錄
