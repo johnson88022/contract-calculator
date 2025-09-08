@@ -359,7 +359,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   clearBtn.addEventListener("click", () => {
     showConfirm("確定要清除全部紀錄嗎？", () => {
-      localStorage.removeItem("calcHistory");
+      // 清空當前使用者的歷史並同步到雲端
+      setHistory([]);
+      syncToCloud();
       loadHistory();
     });
   });
