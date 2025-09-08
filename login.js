@@ -58,13 +58,23 @@ document.addEventListener('DOMContentLoaded', () => {
     handleLogin._busy = true;
     setTimeout(() => { handleLogin._busy = false; }, 600);
 
-    if (!users[email]) { msgEl.textContent = '帳號或密碼錯誤'; return; }
-    try {
-      const rec = users[email];
-      const { hashBase64 } = await pbkdf2Hash(pw, rec.salt, rec.iter || 100000);
-      if (hashBase64 !== rec.hash) { msgEl.textContent = '帳號或密碼錯誤'; return; }
-    } catch (e) {
-      msgEl.textContent = '瀏覽器不支援安全雜湊，請更換瀏覽器';
+    const rec = users[email];
+    if (!rec) { msgEl.textContent = '帳號或密碼錯誤'; return; }
+    // 兼容舊資料（password 欄位使用舊簡易 hash）
+    if (rec.password) {
+      // 舊版簡易 hash：與先前版本一致
+      const legacyHash = (() => { let h = 0; for (let i = 0; i < pw.length; i++) { h = (h << 5) - h + pw.charCodeAt(i); h |= 0; } return String(h); })();
+      if (legacyHash !== rec.password) { msgEl.textContent = '帳號或密碼錯誤'; return; }
+    } else if (rec.hash && rec.salt) {
+      try {
+        const { hashBase64 } = await pbkdf2Hash(pw, rec.salt, rec.iter || 100000);
+        if (hashBase64 !== rec.hash) { msgEl.textContent = '帳號或密碼錯誤'; return; }
+      } catch (e) {
+        msgEl.textContent = '瀏覽器不支援安全雜湊，請更換瀏覽器';
+        return;
+      }
+    } else {
+      msgEl.textContent = '帳號資料缺失，請重新註冊';
       return;
     }
     setSession(email);
