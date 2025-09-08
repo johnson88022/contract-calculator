@@ -144,7 +144,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const body = { message: 'sync history', content: contentB64, branch: 'main' };
     const cachedSha = prevSha || getSavedSha();
     if (cachedSha) body.sha = cachedSha;
-    const res = await fetch(url, { method: 'PUT', headers: h, body: JSON.stringify(body) });
+    let res = await fetch(url, { method: 'PUT', headers: h, body: JSON.stringify(body) });
+    if (res.status === 409) {
+      // sha 衝突，抓最新 sha 後重試一次
+      const latest = await fetchCloud();
+      const retryBody = { ...body, sha: latest?.sha };
+      res = await fetch(url, { method: 'PUT', headers: h, body: JSON.stringify(retryBody) });
+    }
     if (!res.ok) throw new Error('pushCloud failed');
     try { const data = await res.json(); setSavedSha(data.content?.sha || cachedSha); } catch(e){}
     return true;
@@ -178,6 +184,7 @@ document.addEventListener("DOMContentLoaded", () => {
         // 直接用快取 sha 推送，避免每次先 GET
         const local = getHistory();
         await pushCloud(local, getSavedSha());
+        if (bc) bc.postMessage('refresh-history');
       } catch (e) { console.warn('syncToCloud error', e); }
     }, 150);
   }
@@ -186,7 +193,7 @@ document.addEventListener("DOMContentLoaded", () => {
   syncFromCloud().then(loadHistory);
 
   // 加速跨裝置刷新：前景時每 4 秒拉取一次雲端並合併；切回頁面時立即刷新
-  const POLL_MS = 1500;
+  const POLL_MS = 800;
   let pollTimer = null;
   function startPolling() {
     if (pollTimer) return;
@@ -383,14 +390,15 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  clearBtn.addEventListener("click", () => {
-    showConfirm("確定要清除全部紀錄嗎？", () => {
-      // 清空當前使用者的歷史並同步到雲端
-      setHistory([]);
-      syncToCloud();
-      loadHistory();
+  if (clearBtn) {
+    clearBtn.addEventListener("click", () => {
+      showConfirm("確定要清除全部紀錄嗎？", () => {
+        setHistory([]);
+        syncToCloud();
+        loadHistory();
+      });
     });
-  });
+  }
 
   function saveResult(record) {
     let history = getHistory();
