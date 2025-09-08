@@ -124,16 +124,19 @@ document.addEventListener("DOMContentLoaded", () => {
     if (res.status === 404) return { sha:null, history: [] };
     if (!res.ok) throw new Error('fetchCloud failed');
     const json = await res.json();
-    // GitHub API 回傳的 content 為 base64（UTF-8）；需 decodeURIComponent 避免中文亂碼
-    const raw = atob(json.content.replace(/\n/g, ''));
-    const utf8 = decodeURIComponent(escape(raw));
+    // 正確以 UTF-8 解碼 base64
+    const b64 = json.content.replace(/\n/g, '');
+    const bin = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+    const utf8 = new TextDecoder().decode(bin);
     return { sha: json.sha, history: JSON.parse(utf8 || '[]') };
   }
   async function pushCloud(nextHistory, prevSha) {
     const cfg = getCloudCfg(); const h = await ghHeaders(); if (!h) return false;
     const email = localStorage.getItem('sessionUser'); if (!email) return false;
     const url = `https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/${ghPath(email)}`;
-    const contentB64 = btoa(unescape(encodeURIComponent(JSON.stringify(nextHistory))));
+    // 以 UTF-8 正確編碼到 base64
+    const utf8 = new TextEncoder().encode(JSON.stringify(nextHistory));
+    const contentB64 = btoa(String.fromCharCode(...utf8));
     const body = { message: 'sync history', content: contentB64, branch: 'main' };
     if (prevSha) body.sha = prevSha;
     const res = await fetch(url, { method: 'PUT', headers: h, body: JSON.stringify(body) });
@@ -151,6 +154,7 @@ document.addEventListener("DOMContentLoaded", () => {
   async function syncToCloud() {
     try {
       const email = localStorage.getItem('sessionUser'); if (!email) return;
+      // 讀取最新 sha，使用 E2E 覆寫以避免版本競爭造成丟失
       const remote = await fetchCloud();
       const local = getHistory();
       await pushCloud(local, remote?.sha || null);
