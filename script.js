@@ -116,6 +116,9 @@ document.addEventListener("DOMContentLoaded", () => {
     return { 'Authorization': `Bearer ${cfg.token}`, 'User-Agent': 'sync-client', 'Content-Type': 'application/json' };
   }
   function ghPath(email) { return `db/users/${email}.json`; }
+  function getShaKey(email){ return `cloudSha:${email}`; }
+  function getSavedSha(){ const email=localStorage.getItem('sessionUser'); return email? localStorage.getItem(getShaKey(email)) : null; }
+  function setSavedSha(sha){ const email=localStorage.getItem('sessionUser'); if(email&&sha) localStorage.setItem(getShaKey(email), sha); }
   async function fetchCloud() {
     const cfg = getCloudCfg(); const h = await ghHeaders(); if (!h) return null;
     const email = localStorage.getItem('sessionUser'); if (!email) return null;
@@ -128,6 +131,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const b64 = json.content.replace(/\n/g, '');
     const bin = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
     const utf8 = new TextDecoder().decode(bin);
+    setSavedSha(json.sha);
     return { sha: json.sha, history: JSON.parse(utf8 || '[]') };
   }
   async function pushCloud(nextHistory, prevSha) {
@@ -138,9 +142,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const utf8 = new TextEncoder().encode(JSON.stringify(nextHistory));
     const contentB64 = btoa(String.fromCharCode(...utf8));
     const body = { message: 'sync history', content: contentB64, branch: 'main' };
-    if (prevSha) body.sha = prevSha;
+    const cachedSha = prevSha || getSavedSha();
+    if (cachedSha) body.sha = cachedSha;
     const res = await fetch(url, { method: 'PUT', headers: h, body: JSON.stringify(body) });
     if (!res.ok) throw new Error('pushCloud failed');
+    try { const data = await res.json(); setSavedSha(data.content?.sha || cachedSha); } catch(e){}
     return true;
   }
   async function syncFromCloud() {
@@ -162,14 +168,18 @@ document.addEventListener("DOMContentLoaded", () => {
       console.warn('syncFromCloud error', e);
     }
   }
-  async function syncToCloud() {
-    try {
-      const email = localStorage.getItem('sessionUser'); if (!email) return;
-      // 讀取最新 sha，使用 E2E 覆寫以避免版本競爭造成丟失
-      const remote = await fetchCloud();
-      const local = getHistory();
-      await pushCloud(local, remote?.sha || null);
-    } catch (e) { console.warn('syncToCloud error', e); }
+  // 以節流/合併請求加速同步
+  let syncTimer = null;
+  function syncToCloud() {
+    if (syncTimer) clearTimeout(syncTimer);
+    syncTimer = setTimeout(async () => {
+      try {
+        const email = localStorage.getItem('sessionUser'); if (!email) return;
+        // 直接用快取 sha 推送，避免每次先 GET
+        const local = getHistory();
+        await pushCloud(local, getSavedSha());
+      } catch (e) { console.warn('syncToCloud error', e); }
+    }, 300);
   }
 
   // 初次載入嘗試雲端覆蓋本機（若有設定）
