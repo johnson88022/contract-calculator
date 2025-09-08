@@ -190,7 +190,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // 初次載入嘗試雲端覆蓋本機（若有設定）
-  syncFromCloud().then(loadHistory);
+  syncFromCloud().then(() => loadHistory());
 
   // 加速跨裝置刷新：前景時每 4 秒拉取一次雲端並合併；切回頁面時立即刷新
   const POLL_MS = 800;
@@ -198,14 +198,14 @@ document.addEventListener("DOMContentLoaded", () => {
   let isEditing = false;
   function startPolling() {
     if (pollTimer) return;
-    pollTimer = setInterval(() => { if (!isEditing) syncFromCloud().then(loadHistory); }, POLL_MS);
+    pollTimer = setInterval(() => { if (!isEditing) syncFromCloud().then(() => loadHistory()); }, POLL_MS);
   }
   function stopPolling() {
     if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
   }
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') {
-      if (!isEditing) syncFromCloud().then(loadHistory);
+      if (!isEditing) syncFromCloud().then(() => loadHistory());
       startPolling();
     } else {
       stopPolling();
@@ -216,7 +216,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // 同裝置多分頁即時同步（BroadcastChannel + storage 事件）
   const bc = ('BroadcastChannel' in window) ? new BroadcastChannel('history-sync') : null;
   if (bc) {
-    bc.onmessage = (ev) => { if (ev?.data === 'refresh-history' && !isEditing) syncFromCloud().then(loadHistory); };
+    bc.onmessage = (ev) => { if (ev?.data === 'refresh-history' && !isEditing) syncFromCloud().then(() => loadHistory()); };
   }
   // 當前選中的比例（預設 0）- 提前宣告避免初次更新視圖報錯
   let presetPercents = { tp1: 0, tp2: 0, tp3: 0 };
@@ -437,17 +437,26 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  let lastRenderedDigest = null;
+  function getDigest(list){ try { return JSON.stringify(list); } catch(e){ return String(Date.now()); } }
   function loadHistory() {
     const history = getHistory();
+    const digest = getDigest(history);
+    if (!isEditing && digest === lastRenderedDigest) return; // 無變化，避免重繪導致 details 收起
     if (history.length === 0) {
       historyDiv.innerHTML = "尚無紀錄";
+      lastRenderedDigest = digest;
       return;
     }
+
+    // 記住哪些項目展開
+    const openSet = new Set(Array.from(historyDiv.querySelectorAll('[data-time] details[open]')).map(el => el.closest('[data-time]')?.dataset?.time).filter(Boolean));
 
     historyDiv.innerHTML = "";
 
     history.forEach((r, i) => {
       const div = document.createElement("div");
+      div.dataset.time = r.time;
       div.className = "history-item";
       const tp = r.tp;
       const summary = `${r.symbol}｜${r.leverage}x｜倉位 ${r.positionValue} U｜保證金 ${r.margin} U｜進場 ${r.entry}｜止損 ${r.stopPercent}%`;
@@ -466,7 +475,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       div.innerHTML = `
         <div style="margin-bottom:6px;"><b>${r.time}</b></div>
-        <details>
+        <details ${openSet.has(r.time) ? 'open' : ''}>
           <summary class="result-summary">${summary}<span class="result-hint">點擊展開詳情</span></summary>
           <div class="result-details">
             <div><strong>方向</strong>：${r.direction === 'long' ? '做多 📈' : '做空 📉'}</div>
