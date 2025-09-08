@@ -362,6 +362,10 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!history[index]) return;
     history[index] = { ...history[index], ...fields };
     setHistory(history);
+    // 將編輯結果同步到雲端，避免重新整理後被雲端覆蓋而消失
+    if (typeof syncToCloud === 'function') {
+      try { syncToCloud(); } catch (e) { /* ignore */ }
+    }
   }
 
   function loadHistory() {
