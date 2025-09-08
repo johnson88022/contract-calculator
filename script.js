@@ -418,11 +418,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function deleteRecord(index) {
     showConfirm("確定要刪除此紀錄嗎？", () => {
-      let history = getHistory();
-      history.splice(index, 1);
-      setHistory(history);
-      syncToCloud();
-      loadHistory();
+      (async () => {
+        try {
+          stopPolling();
+          let history = getHistory();
+          history.splice(index, 1);
+          setHistory(history);
+          const latest = await fetchCloud();
+          await pushCloud(getHistory(), latest?.sha || getSavedSha());
+          if (bc) bc.postMessage('refresh-history');
+        } catch(e) { console.warn('delete sync failed', e); }
+        finally { loadHistory(); startPolling(); }
+      })();
     });
   }
 
@@ -554,6 +561,9 @@ document.addEventListener("DOMContentLoaded", () => {
           controls.appendChild(textSpan);
           controls.appendChild(editBtn);
           controls.appendChild(delBtn);
+          // 立即更新雲端並刷新列表（不等輪詢）
+          syncToCloud();
+          loadHistory();
           isEditing = false;
         });
         cancelBtn.addEventListener("click", () => {
