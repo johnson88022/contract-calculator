@@ -275,7 +275,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const div = document.createElement("div");
       div.className = "history-item";
       const tp = r.tp;
-      const summary = `${r.symbol}｜${r.direction === 'long' ? '做多' : '做空'} ${r.leverage}x｜倉位 ${r.positionValue} U｜保證金 ${r.margin} U｜止損 ${r.stopPercent}%`;
+      const summary = `${r.symbol}｜${r.leverage}x｜倉位 ${r.positionValue} U｜保證金 ${r.margin} U｜進場 ${r.entry}｜止損 ${r.stopPercent}%`;
       const tpTable = tp ? `
         <table class="tp-table">
           <thead>
@@ -294,10 +294,8 @@ document.addEventListener("DOMContentLoaded", () => {
         <details>
           <summary class="result-summary">${summary}<span class="result-hint">點擊展開詳情</span></summary>
           <div class="result-details">
-            <div><strong>方向</strong>：${r.direction === 'long' ? '做多 📈' : '做空 📉'}，<strong>槓桿</strong>：${r.leverage}x</div>
-            <div><strong>進場</strong>：${r.entry}｜<strong>止損</strong>：${r.stop}｜<strong>允許虧損</strong>：${r.maxLoss}</div>
-            <div><strong>倉位價值</strong>：${r.positionValue} U｜<strong>需保證金</strong>：${r.margin} U</div>
-            <div><strong>止損幅度</strong>：${r.stopPercent}%</div>
+            <div><strong>方向</strong>：${r.direction === 'long' ? '做多 📈' : '做空 📉'}</div>
+            <div><strong>允許虧損</strong>：${r.maxLoss} U</div>
             ${tp ? `<div style=\"margin:6px 0;border-top:1px solid #e5e7eb;\"></div>` : ''}
             ${tp ? `<div><strong>止盈比例</strong>：${tp.tp1.pct}/${tp.tp2.pct}/${tp.tp3.pct}</div>` : ''}
             ${tpTable}
