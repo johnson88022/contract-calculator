@@ -87,16 +87,21 @@ document.addEventListener("DOMContentLoaded", () => {
     const tp2CloseValue = calcTpCloseValue(tp2Pct);
     const tp3CloseValue = calcTpCloseValue(tp3Pct);
 
-    // 各 TP 預期盈利（以 U 計）
-    function calcTpProfit(tpPrice) {
+    // 各 TP 累計預期盈利（以 U 計）
+    function calcChangePct(tpPrice) {
       if (isNaN(tpPrice) || tpPrice <= 0) return 0;
-      const changePct = dir === "long" ? (tpPrice - E) / E : (E - tpPrice) / E;
-      return positionValue * changePct; // 用倉位價值 × 漲跌幅近似 PnL
+      return dir === "long" ? (tpPrice - E) / E : (E - tpPrice) / E;
     }
+    const p1 = Math.max(0, (tp1Pct || 0)) / 100;
+    const p2 = Math.max(0, (tp2Pct || 0)) / 100;
+    const p3 = Math.max(0, (tp3Pct || 0)) / 100;
+    const cum1 = Math.min(1, p1);
+    const cum2 = Math.min(1, p1 + p2);
+    const cum3 = Math.min(1, p1 + p2 + p3);
 
-    const tp1Profit = calcTpProfit(tp1Price);
-    const tp2Profit = calcTpProfit(tp2Price);
-    const tp3Profit = calcTpProfit(tp3Price);
+    const tp1Profit = positionValue * cum1 * calcChangePct(tp1Price);
+    const tp2Profit = positionValue * cum2 * calcChangePct(tp2Price);
+    const tp3Profit = positionValue * cum3 * calcChangePct(tp3Price);
 
     const summaryLine = `${symbol}｜${dir === 'long' ? '做多' : '做空'} ${L}x｜倉位 ${positionValue.toFixed(2)} U｜保證金 ${margin.toFixed(2)} U｜止損 ${stopPercent}%`;
 
@@ -152,9 +157,9 @@ document.addEventListener("DOMContentLoaded", () => {
       margin: margin.toFixed(2),
       symbol,
       tp: {
-        tp1: { pct: tp1Pct || 0, price: isNaN(tp1Price)? null : tp1Price, closeValue: tp1CloseValue.toFixed(2), profit: tp1Profit.toFixed(2) },
-        tp2: { pct: tp2Pct || 0, price: isNaN(tp2Price)? null : tp2Price, closeValue: tp2CloseValue.toFixed(2), profit: tp2Profit.toFixed(2) },
-        tp3: { pct: tp3Pct || 0, price: isNaN(tp3Price)? null : tp3Price, closeValue: tp3CloseValue.toFixed(2), profit: tp3Profit.toFixed(2) },
+        tp1: { pct: tp1Pct || 0, price: isNaN(tp1Price)? null : tp1Price, closeValue: tp1CloseValue.toFixed(2), profit: isNaN(tp1Profit)? null : tp1Profit.toFixed(2) },
+        tp2: { pct: tp2Pct || 0, price: isNaN(tp2Price)? null : tp2Price, closeValue: tp2CloseValue.toFixed(2), profit: isNaN(tp2Profit)? null : tp2Profit.toFixed(2) },
+        tp3: { pct: tp3Pct || 0, price: isNaN(tp3Price)? null : tp3Price, closeValue: tp3CloseValue.toFixed(2), profit: isNaN(tp3Profit)? null : tp3Profit.toFixed(2) },
         totalPct: Math.min(100, totalClosePct)
       },
       time: new Date().toLocaleString()
