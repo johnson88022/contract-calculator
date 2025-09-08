@@ -78,7 +78,12 @@
     <div id="result"></div>
 
     <h2>📊 歷史紀錄</h2>
-    <button id="clearHistory">🗑️ 清除全部紀錄</button>
+    <div class="form-group" style="display:flex; gap:6px; align-items:center;">
+      <button id="clearHistory" style="width:auto;">🗑️ 清除全部紀錄</button>
+      <button id="exportHistory" style="width:auto;">⬇️ 匯出</button>
+      <button id="importHistoryBtn" style="width:auto;">⬆️ 匯入</button>
+      <input type="file" id="importHistory" accept="application/json" style="display:none;" />
+    </div>
     <div id="history"></div>
   </div>
 

@@ -22,6 +22,43 @@ document.addEventListener("DOMContentLoaded", () => {
       location.href = 'login.html';
     });
   }
+
+  // 匯出／匯入歷史：用於跨裝置同步（純本地文件）
+  const exportBtn = document.getElementById('exportHistory');
+  const importBtn = document.getElementById('importHistoryBtn');
+  const importFile = document.getElementById('importHistory');
+  if (exportBtn) {
+    exportBtn.addEventListener('click', () => {
+      const email = localStorage.getItem('sessionUser') || 'guest';
+      const history = getHistory();
+      const blob = new Blob([JSON.stringify({ email, history }, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `history-${email}.json`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    });
+  }
+  if (importBtn && importFile) {
+    importBtn.addEventListener('click', () => importFile.click());
+    importFile.addEventListener('change', (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const data = JSON.parse(reader.result);
+          if (!Array.isArray(data.history)) throw new Error('format');
+          setHistory(data.history);
+          loadHistory();
+          alert('匯入完成');
+        } catch (err) {
+          alert('匯入失敗，檔案格式錯誤');
+        }
+      };
+      reader.readAsText(file);
+    });
+  }
   // 當前選中的比例（預設 0）- 提前宣告避免初次更新視圖報錯
   let presetPercents = { tp1: 0, tp2: 0, tp3: 0 };
   // 簡易封裝：取得/寫入歷史紀錄

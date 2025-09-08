@@ -29,7 +29,9 @@ document.addEventListener('DOMContentLoaded', () => {
     users[email] = { password: hash(pw) };
     setUsers(users);
     // 為此帳號建立獨立的歷史命名空間
-    localStorage.setItem(`calcHistory:${email}`, '[]');
+    if (!localStorage.getItem(`calcHistory:${email}`)) {
+      localStorage.setItem(`calcHistory:${email}`, '[]');
+    }
     setSession(email);
     window.location.href = 'index.html';
   }
@@ -39,8 +41,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const pw = passEl.value;
     if (!email || !pw) { msgEl.textContent = '請輸入 Email 與密碼'; return; }
     const users = getUsers();
+    // 防抖處理避免重複點擊導致「失敗/成功」交替
+    if (handleLogin._busy) return;
+    handleLogin._busy = true;
+    setTimeout(() => { handleLogin._busy = false; }, 600);
+
     if (!users[email] || users[email].password !== hash(pw)) { msgEl.textContent = '帳號或密碼錯誤'; return; }
     setSession(email);
+    // 確保此帳號歷史命名空間存在
+    if (!localStorage.getItem(`calcHistory:${email}`)) {
+      localStorage.setItem(`calcHistory:${email}`, '[]');
+    }
     window.location.href = 'index.html';
   }
 
