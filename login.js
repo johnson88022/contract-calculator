@@ -45,6 +45,16 @@ document.addEventListener('DOMContentLoaded', () => {
       localStorage.setItem(`calcHistory:${email}`, '[]');
     }
     setSession(email);
+    
+    // 立即嘗試從雲端同步
+    try {
+      if (typeof syncFromCloud === 'function') {
+        await syncFromCloud();
+      }
+    } catch (e) {
+      console.warn('雲端同步失敗', e);
+    }
+    
     window.location.href = 'index.html';
   }
 
@@ -82,11 +92,19 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!localStorage.getItem(`calcHistory:${email}`)) {
       localStorage.setItem(`calcHistory:${email}`, '[]');
     }
+    
+    // 立即嘗試從雲端同步
+    try {
+      if (typeof syncFromCloud === 'function') {
+        await syncFromCloud();
+      }
+    } catch (e) {
+      console.warn('雲端同步失敗', e);
+    }
+    
     window.location.href = 'index.html';
   }
 
   document.getElementById('registerBtn').addEventListener('click', handleRegister);
   document.getElementById('loginBtn').addEventListener('click', handleLogin);
 });
-
-
