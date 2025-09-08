@@ -398,11 +398,16 @@ document.addEventListener("DOMContentLoaded", () => {
         try {
           stopPolling();
           setHistory([]);
-          const latest = await fetchCloud();
-          await pushCloud([], latest?.sha || getSavedSha());
+          // Push an empty array to the cloud
+          const remote = await fetchCloud();
+          await pushCloud([], remote?.sha || getSavedSha());
           if (bc) bc.postMessage('refresh-history');
-        } catch(e) { console.warn(e); }
-        finally { loadHistory(); startPolling(); }
+        } catch (e) {
+          console.warn('clear-all sync failed', e);
+        } finally {
+          loadHistory();
+          startPolling();
+        }
       });
     });
   }
