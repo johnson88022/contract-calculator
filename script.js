@@ -96,9 +96,18 @@ document.addEventListener("DOMContentLoaded", () => {
       document.body.removeChild(overlay);
       // 立即嘗試拉雲端覆蓋本機
       syncFromCloud().then(loadHistory);
+      if (cloudBtn) cloudBtn.remove(); // 設定完成後不再佔畫面
     };
   }
-  if (cloudBtn) cloudBtn.addEventListener('click', openCloudModal);
+  if (cloudBtn) {
+    cloudBtn.addEventListener('click', openCloudModal);
+    // 若尚未設定 token，首次自動彈出；若已設定，移除按鈕不佔空間
+    if (!getCloudCfg().token) {
+      setTimeout(openCloudModal, 300);
+    } else {
+      cloudBtn.remove();
+    }
+  }
 
   // ====== 雲端同步核心 ======
   async function ghHeaders() {

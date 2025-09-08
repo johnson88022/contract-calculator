@@ -150,11 +150,14 @@ button {
   width: 100%;
   border-collapse: collapse;
   margin-top: 6px;
+  table-layout: fixed;
 }
 .tp-table th, .tp-table td {
   padding: 6px 4px;
   border-bottom: 1px solid #e5e7eb;
   font-weight: 500;
+  word-break: break-all;
+  overflow-wrap: anywhere;
 }
 .tp-table th {
   text-align: left;
@@ -165,6 +168,15 @@ button {
 
 details > summary { list-style: none; }
 details[open] > summary .result-hint { display: none; }
+
+/* 小螢幕下讓表格可水平捲動避免溢出 */
+.result-details {
+  overflow-x: auto;
+}
+
+@media (max-width: 420px) {
+  .tp-table th, .tp-table td { padding: 4px 3px; font-size: 13px; }
+}
 
 /* 歷史紀錄區域 */
 h2 {
