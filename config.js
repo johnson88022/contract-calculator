@@ -1,6 +1,7 @@
-// 可設定成你的後端服務 URL，例如 "http://localhost:8787"、"https://your-app.onrender.com"
+// config.js - 簡單配置
 window.APP_CONFIG = {
-  serverUrl: ""
+  serverUrl: "",
+  debug: true // 開啟調試模式
 };
 
-
+console.log("配置加載完成");
