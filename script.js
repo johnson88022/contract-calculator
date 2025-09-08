@@ -195,16 +195,17 @@ document.addEventListener("DOMContentLoaded", () => {
   // 加速跨裝置刷新：前景時每 4 秒拉取一次雲端並合併；切回頁面時立即刷新
   const POLL_MS = 800;
   let pollTimer = null;
+  let isEditing = false;
   function startPolling() {
     if (pollTimer) return;
-    pollTimer = setInterval(() => { syncFromCloud().then(loadHistory); }, POLL_MS);
+    pollTimer = setInterval(() => { if (!isEditing) syncFromCloud().then(loadHistory); }, POLL_MS);
   }
   function stopPolling() {
     if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
   }
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') {
-      syncFromCloud().then(loadHistory);
+      if (!isEditing) syncFromCloud().then(loadHistory);
       startPolling();
     } else {
       stopPolling();
@@ -215,7 +216,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // 同裝置多分頁即時同步（BroadcastChannel + storage 事件）
   const bc = ('BroadcastChannel' in window) ? new BroadcastChannel('history-sync') : null;
   if (bc) {
-    bc.onmessage = (ev) => { if (ev?.data === 'refresh-history') syncFromCloud().then(loadHistory); };
+    bc.onmessage = (ev) => { if (ev?.data === 'refresh-history' && !isEditing) syncFromCloud().then(loadHistory); };
   }
   // 當前選中的比例（預設 0）- 提前宣告避免初次更新視圖報錯
   let presetPercents = { tp1: 0, tp2: 0, tp3: 0 };
@@ -494,6 +495,7 @@ document.addEventListener("DOMContentLoaded", () => {
       delBtn.addEventListener("click", () => deleteRecord(i));
 
       const enterEditMode = () => {
+        isEditing = true;
         // 以選單與數字欄位替換文本與編輯鍵
         const tpSelect = document.createElement("select");
         ["", "TP1", "TP2", "TP3", "SL"].forEach(v => {
@@ -537,6 +539,7 @@ document.addEventListener("DOMContentLoaded", () => {
           controls.appendChild(textSpan);
           controls.appendChild(editBtn);
           controls.appendChild(delBtn);
+          isEditing = false;
         });
         cancelBtn.addEventListener("click", () => {
           // 回文字檢視
@@ -546,6 +549,7 @@ document.addEventListener("DOMContentLoaded", () => {
           controls.appendChild(textSpan);
           controls.appendChild(editBtn);
           controls.appendChild(delBtn);
+          isEditing = false;
         });
       };
 
