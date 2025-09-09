@@ -69,11 +69,7 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
     
-    // 雲端同步配置按鈕
-    const cloudConfigBtn = document.getElementById('cloudConfigBtn');
-    if (cloudConfigBtn) {
-        cloudConfigBtn.addEventListener('click', openCloudModal);
-    }
+    // 雲端同步功能與設定均已移除
     
     // 計算倉位函數
     function calculatePosition() {
@@ -128,7 +124,7 @@ document.addEventListener("DOMContentLoaded", function() {
             const tp2 = parseFloat(document.getElementById('tp2Price').value) || null;
             const tp3 = parseFloat(document.getElementById('tp3Price').value) || null;
 
-            // 保存到歷史記錄並同步到雲端
+            // 保存到歷史記錄
             const record = {
                 leverage: L,
                 direction: dir,
@@ -149,7 +145,8 @@ document.addEventListener("DOMContentLoaded", function() {
             };
             
             saveResult(record);
-            syncToCloud(); // 立即同步到雲端
+            // 計算後立即刷新歷史
+            loadHistory();
             
         } catch (err) {
             console.error("計算錯誤:", err);
@@ -165,166 +162,6 @@ document.addEventListener("DOMContentLoaded", function() {
             screen: `${screen.width}x${screen.height}`,
             timestamp: new Date().toISOString()
         };
-    }
-    
-    // 雲端同步功能
-    function getCloudConfig() {
-        return JSON.parse(localStorage.getItem('cloudConfig') || '{}');
-    }
-    
-    function setCloudConfig(config) {
-        localStorage.setItem('cloudConfig', JSON.stringify(config));
-    }
-    
-    function openCloudModal() {
-        const config = getCloudConfig();
-        const modal = document.createElement('div');
-        modal.style.cssText = `
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5); display: flex; align-items: center;
-            justify-content: center; z-index: 1000;
-        `;
-        
-        modal.innerHTML = `
-            <div style="background: white; padding: 20px; border-radius: 10px; width: 90%; max-width: 400px;">
-                <h3>☁️ 雲端同步設定</h3>
-                <div style="margin: 15px 0;">
-                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">GitHub Personal Access Token</label>
-                    <input type="password" id="cloudToken" value="${config.token || ''}" 
-                           placeholder="輸入你的 GitHub PAT" 
-                           style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
-                </div>
-                <div style="margin: 15px 0;">
-                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Repository 名稱</label>
-                    <input type="text" id="cloudRepo" value="${config.repo || 'contract-data'}" 
-                           style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
-                </div>
-                <div style="display: flex; gap: 10px; justify-content: flex-end;">
-                    <button id="cloudSave" style="padding: 10px 20px; background: #4CAF50; color: white; border: none; border-radius: 5px;">保存</button>
-                    <button id="cloudCancel" style="padding: 10px 20px; background: #ccc; border: none; border-radius: 5px;">取消</button>
-                </div>
-            </div>
-        `;
-        
-        document.body.appendChild(modal);
-        
-        modal.querySelector('#cloudSave').addEventListener('click', function() {
-            const token = modal.querySelector('#cloudToken').value.trim();
-            const repo = modal.querySelector('#cloudRepo').value.trim();
-            
-            if (token) {
-                setCloudConfig({ token, repo });
-                alert('設定已保存！即將開始同步...');
-                syncFromCloud().then(loadHistory);
-            } else {
-                alert('請輸入有效的 Token');
-            }
-            
-            document.body.removeChild(modal);
-        });
-        
-        modal.querySelector('#cloudCancel').addEventListener('click', function() {
-            document.body.removeChild(modal);
-        });
-    }
-    
-    // 簡化的雲端同步函數
-    async function syncToCloud() {
-        const config = getCloudConfig();
-        if (!config.token) {
-            console.log('未設置雲端同步 token');
-            return false;
-        }
-        
-        try {
-            const history = getHistory();
-            const email = localStorage.getItem('sessionUser') || 'guest';
-            const data = {
-                email: email,
-                history: history,
-                lastSync: Date.now(),
-                device: getDeviceInfo()
-            };
-            
-            // 這裡使用 localStorage 模擬雲端存儲
-            // 實際應用中應該替換為真實的 API 調用
-            localStorage.setItem('cloud_sync_data', JSON.stringify(data));
-            localStorage.setItem('last_sync_time', Date.now().toString());
-            
-            console.log('數據已同步到本地存儲（模擬雲端）');
-            return true;
-            
-        } catch (error) {
-            console.error('同步失敗:', error);
-            return false;
-        }
-    }
-    
-    async function syncFromCloud() {
-        const config = getCloudConfig();
-        if (!config.token) {
-            console.log('未設置雲端同步 token');
-            return false;
-        }
-        
-        try {
-            // 從本地存儲讀取模擬的雲端數據
-            const cloudData = localStorage.getItem('cloud_sync_data');
-            const lastSyncTime = localStorage.getItem('last_sync_time');
-            
-            if (cloudData) {
-                const data = JSON.parse(cloudData);
-                const email = localStorage.getItem('sessionUser') || 'guest';
-                
-                if (data.email === email) {
-                    // 合併歷史記錄
-                    const localHistory = getHistory();
-                    const cloudHistory = data.history || [];
-                    
-                    // 創建合併的歷史記錄（基於時間戳）
-                    const mergedHistory = mergeHistories(localHistory, cloudHistory);
-                    setHistory(mergedHistory);
-                    
-                    console.log('從雲端同步成功', mergedHistory.length, '條記錄');
-                    return true;
-                }
-            }
-            
-            return false;
-            
-        } catch (error) {
-            console.error('從雲端同步失敗:', error);
-            return false;
-        }
-    }
-    
-    // 合併歷史記錄
-    function mergeHistories(localHistory, cloudHistory) {
-        const mergedMap = new Map();
-        
-        // 添加雲端記錄
-        cloudHistory.forEach(item => {
-            if (item.time) {
-                mergedMap.set(item.time, item);
-            }
-        });
-        
-        // 添加本地記錄（如果更新則覆蓋）
-        localHistory.forEach(item => {
-            if (!item.time) return;
-            
-            const existing = mergedMap.get(item.time);
-            const localUpdated = item.updatedAt || new Date(item.time).getTime();
-            const cloudUpdated = existing ? (existing.updatedAt || new Date(existing.time).getTime()) : 0;
-            
-            if (!existing || localUpdated > cloudUpdated) {
-                mergedMap.set(item.time, item);
-            }
-        });
-        
-        return Array.from(mergedMap.values())
-            .sort((a, b) => new Date(b.time) - new Date(a.time))
-            .slice(0, 50); // 限制最多50條記錄
     }
     
     // 歷史記錄功能
@@ -366,23 +203,66 @@ document.addEventListener("DOMContentLoaded", function() {
         
         let html = '';
         history.forEach(function(record, index) {
+            const p = record.tp && record.tp.presetPercents ? record.tp.presetPercents : { tp1: 0, tp2: 0, tp3: 0 };
+            const prices = record.tp && record.tp.prices ? record.tp.prices : {};
+            const totalPositionValue = parseFloat(record.positionValue || '0') || 0;
+            const entry = parseFloat(record.entry || '0') || 0;
+            const dirLong = record.direction === 'long';
+            function calcProfit(exitPrice, percent) {
+                if (!exitPrice || !entry || !percent) return null;
+                const portion = totalPositionValue * (percent / 100);
+                const pnlPerUnit = dirLong ? (exitPrice - entry) : (entry - exitPrice);
+                const expected = (portion / entry) * pnlPerUnit;
+                return { portionValue: portion.toFixed(2), profit: expected.toFixed(2) };
+            }
+            const tp1res = calcProfit(prices.tp1, p.tp1);
+            const tp2res = calcProfit(prices.tp2, p.tp2);
+            const tp3res = calcProfit(prices.tp3, p.tp3);
+
             html += `
-                <div class="history-item" style="margin-bottom: 15px; padding: 10px; border: 1px solid #eee; border-radius: 8px;">
-                    <div style="margin-bottom: 6px;"><b>${record.time}</b></div>
-                    <div>${record.symbol}｜${record.leverage}x｜倉位 ${record.positionValue} U</div>
-                    <div>保證金 ${record.margin} U｜止損 ${record.stopPercent}%</div>
-                    <div>方向: ${record.direction === 'long' ? '做多 📈' : '做空 📉'}</div>
-                    ${record.tp ? `
-                    <div style="margin-top:6px; font-size:13px; color:#374151;">
-                      <div>TP 比例：${(record.tp.presetPercents?.tp1 ?? '--')}/${(record.tp.presetPercents?.tp2 ?? '--')}/${(record.tp.presetPercents?.tp3 ?? '--')}</div>
-                      <div>TP 價位：${record.tp.prices?.tp1 ?? '--'} / ${record.tp.prices?.tp2 ?? '--'} / ${record.tp.prices?.tp3 ?? '--'}</div>
+                <details class="history-item">
+                    <summary style="cursor:pointer;">
+                        <div style="margin-bottom: 6px;"><b>${record.time}</b></div>
+                        <div>${record.symbol}｜${record.leverage}x｜倉位 ${record.positionValue} U</div>
+                        <div>保證金 ${record.margin} U｜止損 ${record.stopPercent}%</div>
+                        <div>方向: ${record.direction === 'long' ? '做多 📈' : '做空 📉'}</div>
+                        <span class="result-hint">點我展開 TP 明細</span>
+                    </summary>
+                    <div class="result-details">
+                        <table class="tp-table">
+                            <thead>
+                                <tr><th>TP</th><th>比例(%)</th><th>價位</th><th>平倉倉位價值(U)</th><th>預期盈利(U)</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>TP1</td>
+                                    <td>${p.tp1 ?? '--'}</td>
+                                    <td>${prices.tp1 ?? '--'}</td>
+                                    <td>${tp1res ? tp1res.portionValue : '--'}</td>
+                                    <td>${tp1res ? tp1res.profit : '--'}</td>
+                                </tr>
+                                <tr>
+                                    <td>TP2</td>
+                                    <td>${p.tp2 ?? '--'}</td>
+                                    <td>${prices.tp2 ?? '--'}</td>
+                                    <td>${tp2res ? tp2res.portionValue : '--'}</td>
+                                    <td>${tp2res ? tp2res.profit : '--'}</td>
+                                </tr>
+                                <tr>
+                                    <td>TP3</td>
+                                    <td>${p.tp3 ?? '--'}</td>
+                                    <td>${prices.tp3 ?? '--'}</td>
+                                    <td>${tp3res ? tp3res.portionValue : '--'}</td>
+                                    <td>${tp3res ? tp3res.profit : '--'}</td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
-                    ` : ''}
-                    <button onclick="deleteRecord(${index})" style="margin-top: 8px; padding: 5px 10px; background: #ff4757; color: white; border: none; border-radius: 4px; font-size: 12px;">刪除</button>
-                </div>
+                    <button onclick=\"deleteRecord(${index})\">刪除</button>
+                </details>
             `;
         });
-        
+
         historyDiv.innerHTML = html;
     }
     
@@ -392,7 +272,6 @@ document.addEventListener("DOMContentLoaded", function() {
             let history = getHistory();
             history.splice(index, 1);
             setHistory(history);
-            syncToCloud(); // 同步刪除操作
             loadHistory();
         }
     };
@@ -403,62 +282,13 @@ document.addEventListener("DOMContentLoaded", function() {
         clearBtn.addEventListener("click", function() {
             if (confirm("確定要清除全部紀錄嗎？")) {
                 setHistory([]);
-                syncToCloud(); // 同步清除操作
                 loadHistory();
             }
         });
     }
     
-    // 導出功能
-    const exportBtn = document.getElementById('exportHistory');
-    if (exportBtn) {
-        exportBtn.addEventListener('click', function() {
-            const history = getHistory();
-            const dataStr = JSON.stringify(history, null, 2);
-            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-            
-            const exportFileDefaultName = `contract-history-${new Date().toISOString().split('T')[0]}.json`;
-            
-            const linkElement = document.createElement('a');
-            linkElement.setAttribute('href', dataUri);
-            linkElement.setAttribute('download', exportFileDefaultName);
-            linkElement.click();
-        });
-    }
+    // 匯出/匯入功能已移除
     
-    // 定時同步
-    let syncInterval = null;
-    function startSync() {
-        if (syncInterval) clearInterval(syncInterval);
-        
-        syncInterval = setInterval(async () => {
-            const config = getCloudConfig();
-            if (config.token) {
-                await syncFromCloud();
-                loadHistory();
-            }
-        }, 30000); // 每30秒同步一次
-    }
-    
-    // 頁面可見時同步
-    document.addEventListener('visibilitychange', function() {
-        if (!document.hidden) {
-            const config = getCloudConfig();
-            if (config.token) {
-                syncFromCloud().then(loadHistory);
-            }
-        }
-    });
-    
-    // 初始化
+    // 初始化（移除雲端同步輪詢）
     loadHistory();
-    startSync();
-    
-    // 首次加載時嘗試同步
-    setTimeout(() => {
-        const config = getCloudConfig();
-        if (config.token) {
-            syncFromCloud().then(loadHistory);
-        }
-    }, 1000);
 });

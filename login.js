@@ -71,12 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     setSession(email);
     
-    // 登入後立即同步
-    setTimeout(() => {
-      if (typeof syncFromCloud === 'function') {
-        syncFromCloud().catch(console.error);
-      }
-    }, 500);
+    // 已移除雲端同步功能
     
     window.location.href = 'index.html';
   }
@@ -128,12 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
       console.warn('自動匯入歷史資訊失敗或不存在 JSON 檔案');
     }
     
-    // 登入後立即同步
-    setTimeout(() => {
-      if (typeof syncFromCloud === 'function') {
-        syncFromCloud().catch(console.error);
-      }
-    }, 500);
+    // 已移除雲端同步功能
     
     window.location.href = 'index.html';
   }
