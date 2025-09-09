@@ -313,22 +313,45 @@ document.addEventListener("DOMContentLoaded", function() {
             const tp2res = calcProfit(prices.tp2, p.tp2);
             const tp3res = calcProfit(prices.tp3, p.tp3);
 
+            const summaryView = `
+                        <div style=\"margin-bottom: 6px;\"><b>${record.time}</b></div>
+                        <div class=\"row-view\">
+                          ${record.symbol}｜${record.leverage}x｜${record.entry} ${record.direction === 'long' ? '多' : '空'}｜倉位價值 ${record.positionValue} U
+                        </div>
+                        <div class=\"row-view\">
+                          保證金 ${record.margin} U｜止損 ${record.stopPercent}%
+                          <span class=\"edit-actions\"><button class=\"pill-btn\" data-action=\"editRow\" data-i=\"${index}\">編輯</button></span>
+                        </div>`;
+            const summaryEdit = `
+                        <div class=\"row-edit\">
+                          <input class=\"inline-edit\" value=\"${record.symbol}\" data-k=\"symbol\" data-i=\"${index}\" style=\"width:120px\">｜
+                          <input class=\"inline-edit\" type=\"number\" value=\"${record.leverage}\" data-k=\"leverage\" data-i=\"${index}\" style=\"width:60px\">x｜
+                          <input class=\"inline-edit\" type=\"number\" value=\"${record.entry}\" data-k=\"entry\" data-i=\"${index}\" style=\"width:100px\"> ${record.direction === 'long' ? '多' : '空'}｜倉位價值 ${record.positionValue} U
+                        </div>
+                        <div class=\"row-edit\">
+                          保證金 <input class=\"inline-edit\" type=\"number\" value=\"${record.margin}\" data-k=\"margin\" data-i=\"${index}\" style=\"width:100px\"> U｜止損 
+                          <input class=\"inline-edit\" type=\"number\" value=\"${record.stopPercent}\" data-k=\"stopPercent\" data-i=\"${index}\" style=\"width:80px\">%
+                          <span class=\"edit-actions\"><button class=\"pill-btn\" data-action=\"saveRow\" data-i=\"${index}\">保存</button><button class=\"pill-btn\" data-action=\"cancelEdit\" data-i=\"${index}\">取消</button></span>
+                        </div>`;
+
             html += `
-                <details class="history-item">
-                    <summary style="cursor:pointer;">
-                        <div style="margin-bottom: 6px;"><b>${record.time}</b></div>
-                        <div>
-                          <input value="${record.symbol}" data-k="symbol" data-i="${index}" style="width:120px">｜
-                          <input type="number" value="${record.leverage}" data-k="leverage" data-i="${index}" style="width:60px">x｜
-                          <input type="number" value="${record.entry}" data-k="entry" data-i="${index}" style="width:100px"> ${record.direction === 'long' ? '多' : '空'}｜倉位價值 ${record.positionValue} U
-                        </div>
-                        <div>
-                          保證金 <input type="number" value="${record.margin}" data-k="margin" data-i="${index}" style="width:100px"> U｜止損 
-                          <input type="number" value="${record.stopPercent}" data-k="stopPercent" data-i="${index}" style="width:80px">%
-                          <button data-action="saveRow" data-i="${index}" style="margin-left:8px;width:auto;">保存</button>
-                        </div>
+                <details class=\"history-item\">
+                    <summary style=\"cursor:pointer;\">
+${summaryView}
+${summaryEdit}
                         <div>方向: ${record.direction === 'long' ? '做多 📈' : '做空 📉'}</div>
-                        <span class="result-hint">點我展開 TP 明細</span>
+                        <div style=\"margin-top:6px;\">
+                          交易結果：
+                          <select data-action=\"resultSelect\" data-i=\"${index}\" style=\"width:auto; padding:4px 8px;\">
+                            <option value=\"\" ${record.tradeResult?'' : 'selected'}>未選擇</option>
+                            <option ${record.tradeResult==='TP1'?'selected':''} value=\"TP1\">TP1</option>
+                            <option ${record.tradeResult==='TP2'?'selected':''} value=\"TP2\">TP2</option>
+                            <option ${record.tradeResult==='TP3'?'selected':''} value=\"TP3\">TP3</option>
+                            <option ${record.tradeResult==='SL'?'selected':''} value=\"SL\">SL</option>
+                            <option ${record.tradeResult==='R'?'selected':''} value=\"R\">R</option>
+                          </select>
+                        </div>
+                        <span class=\"result-hint\">點我展開 TP 明細</span>
                     </summary>
                     <div class="result-details">
                         <table class="tp-table">
@@ -366,7 +389,7 @@ document.addEventListener("DOMContentLoaded", function() {
         });
 
         historyDiv.innerHTML = html;
-        // 綁定保存按鈕事件（在列表渲染後）
+        // 綁定保存/編輯/取消/交易結果事件（在列表渲染後）
         historyDiv.querySelectorAll('button[data-action="saveRow"]').forEach(function(btn){
             btn.addEventListener('click', function(e){
                 const i = parseInt(e.currentTarget.getAttribute('data-i'));
@@ -399,6 +422,34 @@ document.addEventListener("DOMContentLoaded", function() {
                 row.updatedAt = Date.now();
                 setHistory(history);
                 loadHistory();
+                syncToCloud().catch(()=>{});
+            });
+        });
+        historyDiv.querySelectorAll('button[data-action="editRow"]').forEach(function(btn){
+            btn.addEventListener('click', function(e){
+                const summary = e.currentTarget.closest('summary');
+                if (!summary) return;
+                summary.querySelectorAll('.row-view').forEach(el=> el.style.display='none');
+                summary.querySelectorAll('.row-edit').forEach(el=> el.style.display='block');
+            });
+        });
+        historyDiv.querySelectorAll('button[data-action="cancelEdit"]').forEach(function(btn){
+            btn.addEventListener('click', function(e){
+                const summary = e.currentTarget.closest('summary');
+                if (!summary) return;
+                summary.querySelectorAll('.row-edit').forEach(el=> el.style.display='none');
+                summary.querySelectorAll('.row-view').forEach(el=> el.style.display='block');
+            });
+        });
+        historyDiv.querySelectorAll('select[data-action="resultSelect"]').forEach(function(sel){
+            sel.addEventListener('change', function(e){
+                const i = parseInt(e.currentTarget.getAttribute('data-i'));
+                let history = getHistory();
+                const row = history[i];
+                if (!row) return;
+                row.tradeResult = e.currentTarget.value;
+                row.updatedAt = Date.now();
+                setHistory(history);
                 syncToCloud().catch(()=>{});
             });
         });

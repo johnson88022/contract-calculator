@@ -229,6 +229,20 @@ h2 {
   background: #e5e7eb;
 }
 
+/* 內嵌編輯樣式 */
+.inline-edit {
+  border: 0;
+  border-bottom: 1px dashed #d1d5db;
+  background: transparent;
+  padding: 2px 4px;
+  font-size: 14px;
+}
+.row-view { display: block; }
+.row-edit { display: none; margin-top: 6px; }
+.edit-actions { display: inline-flex; gap: 6px; margin-left: 8px; }
+.pill-btn { padding: 4px 10px; border-radius: 999px; border: 1px solid #d1d5db; background:#f3f4f6; width:auto; font-size:12px; }
+.pill-btn:hover { background:#e5e7eb; }
+
 /* 響應式設計 */
 @media (max-width: 480px) {
   .container { padding: 10px 8px; }
