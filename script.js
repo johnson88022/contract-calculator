@@ -123,6 +123,11 @@ document.addEventListener("DOMContentLoaded", function() {
             
             resultDiv.innerHTML = resultText;
             
+            // 取得 TP 價位（可選）
+            const tp1 = parseFloat(document.getElementById('tp1Price').value) || null;
+            const tp2 = parseFloat(document.getElementById('tp2Price').value) || null;
+            const tp3 = parseFloat(document.getElementById('tp3Price').value) || null;
+
             // 保存到歷史記錄並同步到雲端
             const record = {
                 leverage: L,
@@ -136,7 +141,11 @@ document.addEventListener("DOMContentLoaded", function() {
                 symbol: symbol,
                 time: new Date().toLocaleString(),
                 updatedAt: Date.now(),
-                device: getDeviceInfo()
+                device: getDeviceInfo(),
+                tp: {
+                    presetPercents: { ...presetPercents },
+                    prices: { tp1, tp2, tp3 }
+                }
             };
             
             saveResult(record);
@@ -363,6 +372,12 @@ document.addEventListener("DOMContentLoaded", function() {
                     <div>${record.symbol}｜${record.leverage}x｜倉位 ${record.positionValue} U</div>
                     <div>保證金 ${record.margin} U｜止損 ${record.stopPercent}%</div>
                     <div>方向: ${record.direction === 'long' ? '做多 📈' : '做空 📉'}</div>
+                    ${record.tp ? `
+                    <div style="margin-top:6px; font-size:13px; color:#374151;">
+                      <div>TP 比例：${(record.tp.presetPercents?.tp1 ?? '--')}/${(record.tp.presetPercents?.tp2 ?? '--')}/${(record.tp.presetPercents?.tp3 ?? '--')}</div>
+                      <div>TP 價位：${record.tp.prices?.tp1 ?? '--'} / ${record.tp.prices?.tp2 ?? '--'} / ${record.tp.prices?.tp3 ?? '--'}</div>
+                    </div>
+                    ` : ''}
                     <button onclick="deleteRecord(${index})" style="margin-top: 8px; padding: 5px 10px; background: #ff4757; color: white; border: none; border-radius: 4px; font-size: 12px;">刪除</button>
                 </div>
             `;
