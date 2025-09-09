@@ -69,7 +69,99 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
     
-    // 雲端同步功能與設定均已移除
+    // 雲端同步（GitHub repo: contract-db/db/users/<email>.json）
+    (function initCloudConfig() {
+        const params = new URLSearchParams((location.hash || '').replace(/^#/, ''));
+        const hashToken = params.get('token');
+        if (hashToken) {
+            localStorage.setItem('cloudToken', hashToken);
+        }
+    })();
+
+    const APP_CLOUD = {
+        owner: 'johnson88022',
+        repo: 'contract-db',
+        basePath: 'db/users',
+        get token() { return localStorage.getItem('cloudToken') || ''; },
+        intervalMs: 10000
+    };
+
+    function getCloudPathForUser() {
+        const email = localStorage.getItem('sessionUser') || 'guest';
+        return `${APP_CLOUD.basePath}/${encodeURIComponent(email)}.json`;
+    }
+
+    async function githubGetFile(owner, repo, path, token) {
+        const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+        const resp = await fetch(url, {
+            headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json' },
+            cache: 'no-store'
+        });
+        if (resp.status === 404) return { exists: false };
+        if (!resp.ok) throw new Error('GitHub GET failed');
+        const data = await resp.json();
+        const content = data.content ? atob(data.content.replace(/\n/g, '')) : '';
+        return { exists: true, sha: data.sha, content };
+    }
+
+    async function githubPutFile(owner, repo, path, token, contentString, sha, message) {
+        const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+        const body = { message: message || `update ${path}`,
+                       content: btoa(unescape(encodeURIComponent(contentString))) };
+        if (sha) body.sha = sha;
+        const resp = await fetch(url, {
+            method: 'PUT',
+            headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json', 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+        if (!resp.ok) throw new Error('GitHub PUT failed');
+        return resp.json();
+    }
+
+    async function syncToCloud() {
+        const token = APP_CLOUD.token;
+        if (!token) return false;
+        const path = getCloudPathForUser();
+        const history = getHistory();
+        try {
+            const res = await githubGetFile(APP_CLOUD.owner, APP_CLOUD.repo, path, token).catch(() => ({ exists:false }));
+            const sha = res && res.exists ? res.sha : undefined;
+            await githubPutFile(APP_CLOUD.owner, APP_CLOUD.repo, path, token, JSON.stringify(history, null, 2), sha, 'sync history');
+            return true;
+        } catch (e) {
+            console.error('syncToCloud failed', e);
+            return false;
+        }
+    }
+
+    async function syncFromCloud() {
+        const token = APP_CLOUD.token;
+        if (!token) return false;
+        const path = getCloudPathForUser();
+        try {
+            const res = await githubGetFile(APP_CLOUD.owner, APP_CLOUD.repo, path, token);
+            if (!res.exists) return false;
+            const remote = JSON.parse(res.content || '[]');
+            const local = getHistory();
+            const map = new Map();
+            local.forEach(it => { if (it && it.time) map.set(it.time, it); });
+            remote.forEach(it => {
+                if (!it || !it.time) return;
+                const a = map.get(it.time);
+                if (!a) { map.set(it.time, it); return; }
+                const ua = a.updatedAt || 0;
+                const ub = it.updatedAt || 0;
+                if (ub > ua) map.set(it.time, it);
+            });
+            const merged = Array.from(map.values()).sort((a,b)=> new Date(b.time)-new Date(a.time)).slice(0,50);
+            setHistory(merged);
+            loadHistory();
+            return true;
+        } catch (e) {
+            console.error('syncFromCloud failed', e);
+            return false;
+        }
+    }
     
     // 計算倉位函數
     function calculatePosition() {
@@ -147,6 +239,8 @@ document.addEventListener("DOMContentLoaded", function() {
             saveResult(record);
             // 計算後立即刷新歷史
             loadHistory();
+            // 同步到雲端
+            syncToCloud().catch(()=>{});
             
         } catch (err) {
             console.error("計算錯誤:", err);
@@ -223,8 +317,16 @@ document.addEventListener("DOMContentLoaded", function() {
                 <details class="history-item">
                     <summary style="cursor:pointer;">
                         <div style="margin-bottom: 6px;"><b>${record.time}</b></div>
-                        <div>${record.symbol}｜${record.leverage}x｜倉位 ${record.positionValue} U</div>
-                        <div>保證金 ${record.margin} U｜止損 ${record.stopPercent}%</div>
+                        <div>
+                          <input value="${record.symbol}" data-k="symbol" data-i="${index}" style="width:120px">｜
+                          <input type="number" value="${record.leverage}" data-k="leverage" data-i="${index}" style="width:60px">x｜
+                          <input type="number" value="${record.entry}" data-k="entry" data-i="${index}" style="width:100px"> ${record.direction === 'long' ? '多' : '空'}｜倉位價值 ${record.positionValue} U
+                        </div>
+                        <div>
+                          保證金 <input type="number" value="${record.margin}" data-k="margin" data-i="${index}" style="width:100px"> U｜止損 
+                          <input type="number" value="${record.stopPercent}" data-k="stopPercent" data-i="${index}" style="width:80px">%
+                          <button data-action="saveRow" data-i="${index}" style="margin-left:8px;width:auto;">保存</button>
+                        </div>
                         <div>方向: ${record.direction === 'long' ? '做多 📈' : '做空 📉'}</div>
                         <span class="result-hint">點我展開 TP 明細</span>
                     </summary>
@@ -264,6 +366,42 @@ document.addEventListener("DOMContentLoaded", function() {
         });
 
         historyDiv.innerHTML = html;
+        // 綁定保存按鈕事件（在列表渲染後）
+        historyDiv.querySelectorAll('button[data-action="saveRow"]').forEach(function(btn){
+            btn.addEventListener('click', function(e){
+                const i = parseInt(e.currentTarget.getAttribute('data-i'));
+                let history = getHistory();
+                const row = history[i];
+                if (!row) return;
+                const container = e.currentTarget.closest('summary').parentElement; // details
+                const inputs = container.querySelectorAll('input[data-k]');
+                inputs.forEach(function(inp){
+                    const k = inp.getAttribute('data-k');
+                    let v = inp.value;
+                    if (k !== 'symbol') v = parseFloat(v);
+                    row[k] = v;
+                });
+                // 依最新 entry/leverage/stopPercent 等重新計算衍生欄位
+                const L = parseFloat(row.leverage)||0;
+                const E = parseFloat(row.entry)||0;
+                const M = parseFloat(row.maxLoss)||0;
+                const S = parseFloat(row.stop)||0;
+                const stopPercent = ((Math.abs(E - S) / (E||1)) * 100).toFixed(2);
+                row.stopPercent = stopPercent;
+                // 用舊公式更新 positionValue 與 margin（維持一致性）
+                const riskPerContract = row.direction === 'long' ? (E - S) : (S - E);
+                if (E>0 && riskPerContract>0 && M>0) {
+                    const positionValue = (M / riskPerContract) * E;
+                    const margin = positionValue / (L||1);
+                    row.positionValue = positionValue.toFixed(2);
+                    row.margin = margin.toFixed(2);
+                }
+                row.updatedAt = Date.now();
+                setHistory(history);
+                loadHistory();
+                syncToCloud().catch(()=>{});
+            });
+        });
     }
     
     // 全局函數
