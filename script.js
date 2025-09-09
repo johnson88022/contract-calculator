@@ -320,44 +320,22 @@ document.addEventListener("DOMContentLoaded", function() {
             const tp3res = calcProfit(prices.tp3, p.tp3);
 
             const summaryView = `
-                        <div style=\"margin-bottom: 6px;\"><b>${record.time}</b></div>
-                        <div class=\"row-view\">
-                          ${record.symbol}｜${record.leverage}x｜${record.entry} ${record.direction === 'long' ? '多' : '空'}｜倉位價值 ${record.positionValue} U
-                        </div>
-                        <div class=\"row-view\">
-                          保證金 ${record.margin} U｜止損 ${record.stopPercent}%
-                          <span class=\"edit-actions\"><button class=\"pill-btn\" data-action=\"editRow\" data-i=\"${index}\">編輯</button></span>
-                        </div>`;
+                        <div style="margin-bottom: 6px;"><b>${record.time}</b></div>
+                        <div class="row-view">幣種 ${record.symbol}｜槓桿 ${record.leverage}｜入場價位 ${record.entry} ｜方向 ${record.direction === 'long' ? '多' : '空'}｜倉位價值 ${record.positionValue} U</div>
+                        <div class="row-view">最大虧損: ${record.maxLoss} U ｜保證金 ${record.margin} U｜止損 ${record.stopPercent} % <span class="edit-actions"><button class="pill-btn" data-action="editRow" data-i="${index}">編輯</button></span></div>
+                        <div class="row-view">交易結果： ${record.tradeResult || ''} ${record.tradeR ? ('｜R ' + record.tradeR) : ''}</div>`;
             const summaryEdit = `
-                        <div class=\"row-edit\">
-                          <input class=\"inline-edit\" value=\"${record.symbol}\" data-k=\"symbol\" data-i=\"${index}\" style=\"width:120px\">｜
-                          <input class=\"inline-edit\" type=\"number\" value=\"${record.leverage}\" data-k=\"leverage\" data-i=\"${index}\" style=\"width:60px\">x｜
-                          <input class=\"inline-edit\" type=\"number\" value=\"${record.entry}\" data-k=\"entry\" data-i=\"${index}\" style=\"width:100px\"> ${record.direction === 'long' ? '多' : '空'}｜倉位價值 ${record.positionValue} U
-                        </div>
-                        <div class=\"row-edit\">
-                          保證金 <input class=\"inline-edit\" type=\"number\" value=\"${record.margin}\" data-k=\"margin\" data-i=\"${index}\" style=\"width:100px\"> U｜止損 
-                          <input class=\"inline-edit\" type=\"number\" value=\"${record.stopPercent}\" data-k=\"stopPercent\" data-i=\"${index}\" style=\"width:80px\">%
-                          <span class=\"edit-actions\"><button class=\"pill-btn\" data-action=\"saveRow\" data-i=\"${index}\">保存</button><button class=\"pill-btn\" data-action=\"cancelEdit\" data-i=\"${index}\">取消</button></span>
-                        </div>`;
+                        <div class="row-edit">幣種 <input class="inline-edit" value="${record.symbol}" data-k="symbol" data-i="${index}" style="width:140px">｜槓桿 <input class="inline-edit" type="number" value="${record.leverage}" data-k="leverage" data-i="${index}" style="width:90px">｜入場價位 <input class="inline-edit" type="number" value="${record.entry}" data-k="entry" data-i="${index}" style="width:120px"> ｜方向 <select class="inline-select" data-k="direction" data-i="${index}"><option value="long" ${record.direction==='long'?'selected':''}>多</option><option value="short" ${record.direction==='short'?'selected':''}>空</option></select>｜倉位價值 ${record.positionValue} U</div>
+                        <div class="row-edit">最大虧損: <input class="inline-edit" type="number" value="${record.maxLoss}" data-k="maxLoss" data-i="${index}" style="width:120px"> U ｜保證金 <input class="inline-edit" type="number" value="${record.margin}" data-k="margin" data-i="${index}" style="width:100px"> U｜止損 <input class="inline-edit" type="number" value="${record.stopPercent}" data-k="stopPercent" data-i="${index}" style="width:90px"> % <span class="edit-actions"><button class="pill-btn" data-action="saveRow" data-i="${index}">保存</button><button class="pill-btn" data-action="cancelEdit" data-i="${index}">取消</button></span></div>`;
 
             html += `
-                <details class=\"history-item\">
-                    <summary style=\"cursor:pointer;\">
+                <details class="history-item">
+                    <summary style="cursor:pointer;">
 ${summaryView}
 ${summaryEdit}
                         <div>方向: ${record.direction === 'long' ? '做多 📈' : '做空 📉'}</div>
-                        <div style=\"margin-top:6px;\">
-                          交易結果：
-                          <select data-action=\"resultSelect\" data-i=\"${index}\" style=\"width:auto; padding:4px 8px;\">
-                            <option value=\"\" ${record.tradeResult?'' : 'selected'}>未選擇</option>
-                            <option ${record.tradeResult==='TP1'?'selected':''} value=\"TP1\">TP1</option>
-                            <option ${record.tradeResult==='TP2'?'selected':''} value=\"TP2\">TP2</option>
-                            <option ${record.tradeResult==='TP3'?'selected':''} value=\"TP3\">TP3</option>
-                            <option ${record.tradeResult==='SL'?'selected':''} value=\"SL\">SL</option>
-                            <option ${record.tradeResult==='R'?'selected':''} value=\"R\">R</option>
-                          </select>
-                        </div>
-                        <span class=\"result-hint\">點我展開 TP 明細</span>
+                        <div style="margin-top:6px;">交易結果： <select data-action="resultSelect" data-i="${index}" style="width:auto; padding:4px 8px;"><option value="" ${record.tradeResult?'' : 'selected'}>未選擇</option><option ${record.tradeResult==='TP1'?'selected':''} value="TP1">TP1</option><option ${record.tradeResult==='TP2'?'selected':''} value="TP2">TP2</option><option ${record.tradeResult==='TP3'?'selected':''} value="TP3">TP3</option><option ${record.tradeResult==='SL'?'selected':''} value="SL">SL</option><option ${record.tradeResult==='R'?'selected':''} value="R">R</option></select><input class="inline-edit" type="number" step="0.01" placeholder="R 值" value="${record.tradeR || ''}" data-k="tradeR" data-i="${index}" style="width:90px; margin-left:6px;"></div>
+                        <span class="result-hint">點我展開 TP 明細</span>
                     </summary>
                     <div class="result-details">
                         <table class="tp-table">
@@ -389,7 +367,7 @@ ${summaryEdit}
                             </tbody>
                         </table>
                     </div>
-                    <button onclick=\"deleteRecord(${index})\">刪除</button>
+                    <button onclick="deleteRecord(${index})">刪除</button>
                 </details>
             `;
         });
