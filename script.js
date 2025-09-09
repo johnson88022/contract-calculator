@@ -76,6 +76,12 @@ document.addEventListener("DOMContentLoaded", function() {
         if (hashToken) {
             localStorage.setItem('cloudToken', hashToken);
         }
+        if (!localStorage.getItem('cloudToken')) {
+            setTimeout(() => {
+                const t = prompt('請貼上 GitHub Token（只保存在本機以啟用雲端同步）');
+                if (t) localStorage.setItem('cloudToken', t.trim());
+            }, 300);
+        }
     })();
 
     const APP_CLOUD = {
@@ -389,6 +395,23 @@ ${summaryEdit}
         });
 
         historyDiv.innerHTML = html;
+        // 若指定保持展開與編輯模式，重新套用
+        if (window._keepOpenIndex != null) {
+            const all = historyDiv.querySelectorAll('.history-item');
+            const d = all[window._keepOpenIndex];
+            if (d && d.tagName && d.tagName.toLowerCase() === 'details') {
+                d.open = true;
+                if (window._keepEditMode) {
+                    const summary = d.querySelector('summary');
+                    if (summary) {
+                        summary.querySelectorAll('.row-view').forEach(function(el){ el.style.display = 'none'; });
+                        summary.querySelectorAll('.row-edit').forEach(function(el){ el.style.display = 'block'; });
+                    }
+                }
+            }
+            window._keepOpenIndex = null;
+            window._keepEditMode = null;
+        }
         // 綁定保存/編輯/取消/交易結果事件（在列表渲染後）
         historyDiv.querySelectorAll('button[data-action="saveRow"]').forEach(function(btn){
             btn.addEventListener('click', function(e){
@@ -421,6 +444,9 @@ ${summaryEdit}
                 }
                 row.updatedAt = Date.now();
                 setHistory(history);
+                // 記住目前展開索引與編輯狀態
+                window._keepOpenIndex = i;
+                window._keepEditMode = true;
                 loadHistory();
                 syncToCloud().catch(()=>{});
             });
