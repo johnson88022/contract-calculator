@@ -306,6 +306,66 @@ document.addEventListener("DOMContentLoaded", function() {
 
         document.body.removeChild(measure);
     }
+
+    // 綁定編輯時的即時計算（更新 stopPercent、positionValue、margin）
+    function setupLiveRecalc(summary) {
+        if (!summary) return;
+        function recalcAndUpdate() {
+            const getNum = (sel) => {
+                const el = summary.querySelector(sel);
+                if (!el) return NaN;
+                const v = parseFloat(el.value);
+                return isNaN(v) ? NaN : v;
+            };
+            const getSel = (sel) => {
+                const el = summary.querySelector(sel);
+                return el ? el.value : '';
+            };
+
+            const L = getNum('input.inline-edit[data-k="leverage"]');
+            const E = getNum('input.inline-edit[data-k="entry"]');
+            const S = getNum('input.inline-edit[data-k="stop"]');
+            const M = getNum('input.inline-edit[data-k="maxLoss"]');
+            const dir = getSel('select.inline-select[data-k="direction"]') || 'long';
+
+            if (isNaN(L) || isNaN(E) || isNaN(S) || isNaN(M)) {
+                return;
+            }
+
+            const riskPer = dir === 'long' ? (E - S) : (S - E);
+            if (riskPer <= 0) {
+                return;
+            }
+            const stopPercent = ((Math.abs(E - S) / (E || 1)) * 100).toFixed(2);
+            const positionValue = (M / riskPer) * E;
+            const margin = positionValue / (L || 1);
+
+            const setVal = (sel, val) => {
+                const el = summary.querySelector(sel);
+                if (el) { el.value = typeof val === 'number' ? val.toFixed(2) : String(val); }
+            };
+            setVal('input.inline-edit[data-k="stopPercent"]', stopPercent);
+            setVal('input.inline-edit[data-k="positionValue"]', positionValue);
+            setVal('input.inline-edit[data-k="margin"]', margin);
+            autosizeInlineFields(summary);
+        }
+
+        const bindTargets = [
+            'input.inline-edit[data-k="leverage"]',
+            'input.inline-edit[data-k="entry"]',
+            'input.inline-edit[data-k="stop"]',
+            'input.inline-edit[data-k="maxLoss"]',
+            'select.inline-select[data-k="direction"]'
+        ];
+        bindTargets.forEach((sel) => {
+            const el = summary.querySelector(sel);
+            if (el) {
+                el.addEventListener('input', recalcAndUpdate);
+                el.addEventListener('change', recalcAndUpdate);
+            }
+        });
+        recalcAndUpdate();
+    }
     
     // 歷史記錄功能
     function getHistory() {
@@ -537,6 +597,7 @@ ${summaryEdit}
                 summary.querySelectorAll('.row-view').forEach(function(el){ el.style.display='none'; });
                 summary.querySelectorAll('.row-edit').forEach(function(el){ el.style.display='block'; });
                 autosizeInlineFields(summary);
+                setupLiveRecalc(summary);
                 const editBtn = details.querySelector('.action-edit');
                 const saveBtn = details.querySelector('.action-save');
                 const cancelBtn = details.querySelector('.action-cancel');
