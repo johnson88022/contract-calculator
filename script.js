@@ -363,11 +363,17 @@ document.addEventListener("DOMContentLoaded", function() {
             const tp3res = calcProfit(prices.tp3, p.tp3);
 
             const rText = (record.tradeResult === 'R' && record.tradeR !== undefined && record.tradeR !== null && record.tradeR !== '' && !isNaN(parseFloat(record.tradeR))) ? ('R ' + String(record.tradeR)) : (record.tradeResult || '');
+            const recordNo = index + 1;
+            const dirText = record.direction === 'long' ? '做多 📈' : '做空 📉';
             const summaryView = `
                         <div style="padding: 10px; background: #f0f9ff; border-radius: 8px; border: 1px solid #bae6fd;">
-                            <div style="font-weight: bold; margin-bottom: 8px;">📊 計算結果</div>
-                            <div>幣種 ${record.symbol}｜槓桿 ${record.leverage}｜入場價位 ${record.entry} ｜方向 ${record.direction === 'long' ? '多' : '空'}｜倉位價值 ${record.positionValue} U</div>
-                            <div style="margin-top:6px;">最大虧損: ${record.maxLoss} U ｜保證金 ${record.margin} U｜止損 ${record.stopPercent} %</div>
+                            <div style="font-weight: bold; margin-bottom: 8px;">📊 第${recordNo}筆記錄</div>
+                            <div>${record.symbol}｜${record.direction === 'long' ? '做多' : '做空'} ${record.leverage}x｜倉位 ${record.positionValue} U｜保證金 ${record.margin} U｜止損 ${record.stopPercent}%</div>
+                            <div style="margin-top:6px;">方向: ${dirText}</div>
+                            <div>進場價: ${record.entry} | 止損價: ${record.stop}</div>
+                            <div>最大虧損: ${record.maxLoss} U</div>
+                            <div>倉位價值: ${record.positionValue} U</div>
+                            <div>所需保證金: ${record.margin} U</div>
                             <div style="margin-top:6px;">交易結果： ${rText}</div>
                         </div>`;
             const summaryEdit = `
