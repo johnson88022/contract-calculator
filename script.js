@@ -366,7 +366,7 @@ document.addEventListener("DOMContentLoaded", function() {
             const recordNo = index + 1;
             const dirText = record.direction === 'long' ? '做多 📈' : '做空 📉';
             const summaryView = `
-                        <div style="padding: 10px; background: #f0f9ff; border-radius: 8px; border: 1px solid #bae6fd;">
+                        <div class="row-view" style="padding: 10px; background: #f0f9ff; border-radius: 8px; border: 1px solid #bae6fd;">
                             <div style="font-weight: bold; margin-bottom: 8px;">📊 第${recordNo}筆記錄</div>
                             <div>${record.symbol}｜${record.direction === 'long' ? '做多' : '做空'} ${record.leverage}x｜倉位 ${record.positionValue} U｜保證金 ${record.margin} U｜止損 ${record.stopPercent}%</div>
                             <div style="margin-top:6px;">方向: ${dirText}</div>
@@ -377,13 +377,15 @@ document.addEventListener("DOMContentLoaded", function() {
                             <div style="margin-top:6px;">交易結果： ${rText}</div>
                         </div>`;
             const summaryEdit = `
-                        <div class="row-edit">
-                          <div style="padding: 10px; background: #f0f9ff; border-radius: 8px; border: 1px solid #bae6fd;">
-                            <div style="font-weight: bold; margin-bottom: 8px;">📊 計算結果</div>
-                            <div>幣種 <input class="inline-edit" value="${record.symbol}" data-k="symbol" data-i="${index}">｜槓桿 <input class="inline-edit" type="number" value="${record.leverage}" data-k="leverage" data-i="${index}">｜入場價位 <input class="inline-edit" type="number" value="${record.entry}" data-k="entry" data-i="${index}"> ｜方向 <select class="inline-select" data-k="direction" data-i="${index}"><option value="long" ${record.direction==='long'?'selected':''}>多</option><option value="short" ${record.direction==='short'?'selected':''}>空</option></select>｜倉位價值 <input class="inline-edit" type="number" step="0.01" value="${record.positionValue}" data-k="positionValue" data-i="${index}"> U</div>
-                            <div style="margin-top:6px;">最大虧損: <input class="inline-edit" type="number" value="${record.maxLoss}" data-k="maxLoss" data-i="${index}"> U ｜保證金 <input class="inline-edit" type="number" step="0.01" value="${record.margin}" data-k="margin" data-i="${index}"> U｜止損 <input class="inline-edit" type="number" step="0.01" value="${record.stopPercent}" data-k="stopPercent" data-i="${index}"> %</div>
+                        <div class="row-edit" style="padding: 10px; background: #f0f9ff; border-radius: 8px; border: 1px solid #bae6fd;">
+                            <div style="font-weight: bold; margin-bottom: 8px;">📊 第${recordNo}筆記錄</div>
+                            <div>幣種 <input class="inline-edit" value="${record.symbol}" data-k="symbol" data-i="${index}">｜槓桿 <input class="inline-edit" type="number" value="${record.leverage}" data-k="leverage" data-i="${index}">｜入場價位 <input class="inline-edit" type="number" value="${record.entry}" data-k="entry" data-i="${index}"> ｜方向 <select class="inline-select" data-k="direction" data-i="${index}"><option value="long" ${record.direction==='long'?'selected':''}>多</option><option value="short" ${record.direction==='short'?'selected':''}>空</option></select>｜倉位價值 <input class="inline-edit" type="number" step="0.01" value="${record.positionValue}" data-k="positionValue" data-i="${index}"> U｜保證金 <input class="inline-edit" type="number" step="0.01" value="${record.margin}" data-k="margin" data-i="${index}"> U｜止損 <input class="inline-edit" type="number" step="0.01" value="${record.stopPercent}" data-k="stopPercent" data-i="${index}"> %</div>
+                            <div style="margin-top:6px;">方向: <select class="inline-select" data-k="direction" data-i="${index}"><option value="long" ${record.direction==='long'?'selected':''}>做多 📈</option><option value="short" ${record.direction==='short'?'selected':''}>做空 📉</option></select></div>
+                            <div>進場價: <input class="inline-edit" type="number" step="0.01" value="${record.entry}" data-k="entry" data-i="${index}"> | 止損價: <input class="inline-edit" type="number" step="0.01" value="${record.stop}" data-k="stop" data-i="${index}"></div>
+                            <div>最大虧損: <input class="inline-edit" type="number" step="0.01" value="${record.maxLoss}" data-k="maxLoss" data-i="${index}"> U</div>
+                            <div>倉位價值: <input class="inline-edit" type="number" step="0.01" value="${record.positionValue}" data-k="positionValue" data-i="${index}"> U</div>
+                            <div>所需保證金: <input class="inline-edit" type="number" step="0.01" value="${record.margin}" data-k="margin" data-i="${index}"> U</div>
                             <div style="margin-top:6px;">交易結果： <select class="inline-select" data-action="resultSelect" data-i="${index}"><option value="" ${record.tradeResult?'' : 'selected'}>未選擇</option><option ${record.tradeResult==='TP1'?'selected':''} value="TP1">TP1</option><option ${record.tradeResult==='TP2'?'selected':''} value="TP2">TP2</option><option ${record.tradeResult==='TP3'?'selected':''} value="TP3">TP3</option><option ${record.tradeResult==='SL'?'selected':''} value="SL">SL</option><option ${record.tradeResult==='R'?'selected':''} value="R">R</option></select><input class="inline-edit" type="number" step="0.01" placeholder="R 值" value="${record.tradeR || ''}" data-k="tradeR" data-i="${index}" style="margin-left:6px;"></div>
-                          </div>
                         </div>`;
 
             html += `
