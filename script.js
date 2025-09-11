@@ -362,12 +362,15 @@ document.addEventListener("DOMContentLoaded", function() {
             const tp2res = calcProfit(prices.tp2, p.tp2);
             const tp3res = calcProfit(prices.tp3, p.tp3);
 
-            const rText = (record.tradeResult === 'R' && record.tradeR !== undefined && record.tradeR !== null && record.tradeR !== '' && !isNaN(parseFloat(record.tradeR))) ? ('R ' + parseFloat(record.tradeR)) : (record.tradeResult || '');
+            const rText = (record.tradeResult === 'R' && record.tradeR !== undefined && record.tradeR !== null && record.tradeR !== '' && !isNaN(parseFloat(record.tradeR))) ? ('R ' + String(record.tradeR)) : (record.tradeResult || '');
             const summaryView = `
                         <div style="margin-bottom: 6px;"><b>${record.time}</b></div>
-                        <div class="row-view">幣種 ${record.symbol}｜槓桿 ${record.leverage}｜入場價位 ${record.entry} ｜方向 ${record.direction === 'long' ? '多' : '空'}｜倉位價值 ${record.positionValue} U</div>
-                        <div class="row-view">最大虧損: ${record.maxLoss} U ｜保證金 ${record.margin} U｜止損 ${record.stopPercent} % </div>
-                        <div class="row-view">交易結果： ${rText}</div>`;
+                        <div style="padding: 10px; background: #f0f9ff; border-radius: 8px; border: 1px solid #bae6fd;">
+                            <div style="font-weight: bold; margin-bottom: 8px;">📊 計算結果</div>
+                            <div>幣種 ${record.symbol}｜槓桿 ${record.leverage}｜入場價位 ${record.entry} ｜方向 ${record.direction === 'long' ? '多' : '空'}｜倉位價值 ${record.positionValue} U</div>
+                            <div style="margin-top:6px;">最大虧損: ${record.maxLoss} U ｜保證金 ${record.margin} U｜止損 ${record.stopPercent} %</div>
+                            <div style="margin-top:6px;">交易結果： ${rText}</div>
+                        </div>`;
             const summaryEdit = `
                         <div class="row-edit">幣種 <input class="inline-edit" value="${record.symbol}" data-k="symbol" data-i="${index}">｜槓桿 <input class="inline-edit" type="number" value="${record.leverage}" data-k="leverage" data-i="${index}">｜入場價位 <input class="inline-edit" type="number" value="${record.entry}" data-k="entry" data-i="${index}"> ｜方向 <select class="inline-select" data-k="direction" data-i="${index}"><option value="long" ${record.direction==='long'?'selected':''}>多</option><option value="short" ${record.direction==='short'?'selected':''}>空</option></select>｜倉位價值 <input class="inline-edit" type="number" step="0.01" value="${record.positionValue}" data-k="positionValue" data-i="${index}"> U</div>
                         <div class="row-edit">最大虧損: <input class="inline-edit" type="number" value="${record.maxLoss}" data-k="maxLoss" data-i="${index}"> U ｜保證金 <input class="inline-edit" type="number" step="0.01" value="${record.margin}" data-k="margin" data-i="${index}"> U｜止損 <input class="inline-edit" type="number" step="0.01" value="${record.stopPercent}" data-k="stopPercent" data-i="${index}"> %</div>
@@ -466,6 +469,12 @@ ${summaryEdit}
                 const resultSel = container.querySelector(`select[data-action="resultSelect"][data-i="${i}"]`);
                 if (resultSel) {
                     row.tradeResult = resultSel.value;
+                }
+                // 同步保存 R 值（即使不是 R 也存入以便使用者之後切換時保留）
+                const rInput = container.querySelector(`input.inline-edit[data-k="tradeR"][data-i="${i}"]`);
+                if (rInput) {
+                    const v = rInput.value;
+                    row.tradeR = v === '' ? '' : parseFloat(v);
                 }
                 // 依最新 entry/leverage/stopPercent 等重新計算衍生欄位
                 const L = parseFloat(row.leverage)||0;
