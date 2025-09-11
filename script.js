@@ -366,13 +366,12 @@ document.addEventListener("DOMContentLoaded", function() {
                         <div class="row-view">最大虧損: ${record.maxLoss} U ｜保證金 ${record.margin} U｜止損 ${record.stopPercent} % </div>
                         <div class="row-view">交易結果：</div>
                         <div class="row-view">方向: ${record.direction === 'long' ? '做多 📈' : '做空 📉'}</div>
-                        <div class="row-view">交易結果： ${(record.tradeResult || '') + (record.tradeR ? (' ' + record.tradeR) : '')}</div>
-                        <div class="row-view" style="margin-top:6px;"><span class="edit-actions"><button class="pill-btn" data-action="editRow" data-i="${index}">編輯</button><button class="pill-btn" onclick="deleteRecord(${index})">刪除</button></span></div>`;
+                        <div class="row-view">交易結果： ${record.tradeResult ? (record.tradeResult === 'R' ? ('R ' + (record.tradeR || '')) : record.tradeResult) : ''}</div>`;
             const summaryEdit = `
                         <div class="row-edit">幣種 <input class="inline-edit" value="${record.symbol}" data-k="symbol" data-i="${index}">｜槓桿 <input class="inline-edit" type="number" value="${record.leverage}" data-k="leverage" data-i="${index}">｜入場價位 <input class="inline-edit" type="number" value="${record.entry}" data-k="entry" data-i="${index}"> ｜方向 <select class="inline-select" data-k="direction" data-i="${index}"><option value="long" ${record.direction==='long'?'selected':''}>多</option><option value="short" ${record.direction==='short'?'selected':''}>空</option></select>｜倉位價值 <input class="inline-edit" type="number" step="0.01" value="${record.positionValue}" data-k="positionValue" data-i="${index}"> U</div>
                         <div class="row-edit">最大虧損: <input class="inline-edit" type="number" value="${record.maxLoss}" data-k="maxLoss" data-i="${index}"> U ｜保證金 <input class="inline-edit" type="number" step="0.01" value="${record.margin}" data-k="margin" data-i="${index}"> U｜止損 <input class="inline-edit" type="number" step="0.01" value="${record.stopPercent}" data-k="stopPercent" data-i="${index}"> %</div>
                         <div class="row-edit">交易結果： <select class="inline-select" data-action="resultSelect" data-i="${index}"><option value="" ${record.tradeResult?'' : 'selected'}>未選擇</option><option ${record.tradeResult==='TP1'?'selected':''} value="TP1">TP1</option><option ${record.tradeResult==='TP2'?'selected':''} value="TP2">TP2</option><option ${record.tradeResult==='TP3'?'selected':''} value="TP3">TP3</option><option ${record.tradeResult==='SL'?'selected':''} value="SL">SL</option><option ${record.tradeResult==='R'?'selected':''} value="R">R</option></select><input class="inline-edit" type="number" step="0.01" placeholder="R 值" value="${record.tradeR || ''}" data-k="tradeR" data-i="${index}" style="margin-left:6px;"></div>
-                        <div class="row-edit"><span class="edit-actions"><button class="pill-btn" data-action="saveRow" data-i="${index}">保存</button><button class="pill-btn" data-action="cancelEdit" data-i="${index}">取消</button><button class="pill-btn" onclick="deleteRecord(${index})">刪除</button></span></div>`;
+                        <div class="row-edit"><span class="edit-actions"><button class="pill-btn" data-action="saveRow" data-i="${index}">保存</button><button class="pill-btn" data-action="cancelEdit" data-i="${index}">取消</button></span></div>`;
 
             html += `
                 <details class="history-item">
@@ -413,7 +412,10 @@ ${summaryEdit}
                             </tbody>
                         </table>
                     </div>
-                    <button onclick="deleteRecord(${index})">刪除</button>
+                    <div class="record-actions" style="margin-top:8px;display:flex;gap:8px;justify-content:flex-end;">
+                        <button class="pill-btn" data-action="editRow" data-i="${index}">編輯</button>
+                        <button class="pill-btn" onclick="deleteRecord(${index})">刪除</button>
+                    </div>
                 </details>
             `;
         });
@@ -452,6 +454,12 @@ ${summaryEdit}
                     let v = inp.value;
                     if (k !== 'symbol') v = parseFloat(v);
                     row[k] = v;
+                });
+                // 讀取 select 類型欄位（例如方向）
+                const selects = container.querySelectorAll('select[data-k]');
+                selects.forEach(function(sel){
+                    const k = sel.getAttribute('data-k');
+                    row[k] = sel.value;
                 });
                 // 同步保存交易結果選擇
                 const resultSel = container.querySelector(`select[data-action="resultSelect"][data-i="${i}"]`);
