@@ -364,8 +364,6 @@ document.addEventListener("DOMContentLoaded", function() {
                         <div style="margin-bottom: 6px;"><b>${record.time}</b></div>
                         <div class="row-view">幣種 ${record.symbol}｜槓桿 ${record.leverage}｜入場價位 ${record.entry} ｜方向 ${record.direction === 'long' ? '多' : '空'}｜倉位價值 ${record.positionValue} U</div>
                         <div class="row-view">最大虧損: ${record.maxLoss} U ｜保證金 ${record.margin} U｜止損 ${record.stopPercent} % </div>
-                        <div class="row-view">交易結果：</div>
-                        <div class="row-view">方向: ${record.direction === 'long' ? '做多 📈' : '做空 📉'}</div>
                         <div class="row-view">交易結果： ${record.tradeResult ? (record.tradeResult === 'R' ? ('R ' + (record.tradeR || '')) : record.tradeResult) : ''}</div>`;
             const summaryEdit = `
                         <div class="row-edit">幣種 <input class="inline-edit" value="${record.symbol}" data-k="symbol" data-i="${index}">｜槓桿 <input class="inline-edit" type="number" value="${record.leverage}" data-k="leverage" data-i="${index}">｜入場價位 <input class="inline-edit" type="number" value="${record.entry}" data-k="entry" data-i="${index}"> ｜方向 <select class="inline-select" data-k="direction" data-i="${index}"><option value="long" ${record.direction==='long'?'selected':''}>多</option><option value="short" ${record.direction==='short'?'selected':''}>空</option></select>｜倉位價值 <input class="inline-edit" type="number" step="0.01" value="${record.positionValue}" data-k="positionValue" data-i="${index}"> U</div>
@@ -378,8 +376,6 @@ document.addEventListener("DOMContentLoaded", function() {
                     <summary style="cursor:pointer;">
 ${summaryView}
 ${summaryEdit}
-                        <div>方向: ${record.direction === 'long' ? '做多 📈' : '做空 📉'}</div>
-                        <div style="margin-top:6px;">交易結果： <select class="inline-select" data-action="resultSelect" data-i="${index}"><option value="" ${record.tradeResult?'' : 'selected'}>未選擇</option><option ${record.tradeResult==='TP1'?'selected':''} value="TP1">TP1</option><option ${record.tradeResult==='TP2'?'selected':''} value="TP2">TP2</option><option ${record.tradeResult==='TP3'?'selected':''} value="TP3">TP3</option><option ${record.tradeResult==='SL'?'selected':''} value="SL">SL</option><option ${record.tradeResult==='R'?'selected':''} value="R">R</option></select><input class="inline-edit" type="number" step="0.01" placeholder="R 值" value="${record.tradeR || ''}" data-k="tradeR" data-i="${index}" style="margin-left:6px;"></div>
                         <span class="result-hint">點我展開 TP 明細</span>
                     </summary>
                     <div class="result-details">
@@ -492,10 +488,12 @@ ${summaryEdit}
         });
         historyDiv.querySelectorAll('button[data-action="editRow"]').forEach(function(btn){
             btn.addEventListener('click', function(e){
-                const summary = e.currentTarget.closest('summary');
+                const details = e.currentTarget.closest('details');
+                if (!details) return;
+                const summary = details.querySelector('summary');
                 if (!summary) return;
-                summary.querySelectorAll('.row-view').forEach(el=> el.style.display='none');
-                summary.querySelectorAll('.row-edit').forEach(el=> el.style.display='block');
+                summary.querySelectorAll('.row-view').forEach(function(el){ el.style.display='none'; });
+                summary.querySelectorAll('.row-edit').forEach(function(el){ el.style.display='block'; });
                 autosizeInlineFields(summary);
             });
         });
