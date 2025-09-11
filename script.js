@@ -322,11 +322,11 @@ document.addEventListener("DOMContentLoaded", function() {
             const summaryView = `
                         <div style="margin-bottom: 6px;"><b>${record.time}</b></div>
                         <div class="row-view">幣種 ${record.symbol}｜槓桿 ${record.leverage}｜入場價位 ${record.entry} ｜方向 ${record.direction === 'long' ? '多' : '空'}｜倉位價值 ${record.positionValue} U</div>
-                        <div class="row-view">最大虧損: ${record.maxLoss} U ｜保證金 ${record.margin} U｜止損 ${record.stopPercent} % <span class="edit-actions"><button class="pill-btn" data-action="editRow" data-i="${index}">編輯</button></span></div>
+                        <div class="row-view">最大虧損: ${record.maxLoss} U ｜保證金 ${record.margin} U｜止損 ${record.stopPercent} % <span class="edit-actions"><button class="pill-btn" data-action="editRow" data-i="${index}">編輯</button><button class="pill-btn" onclick="deleteRecord(${index})">刪除</button></span></div>
                         <div class="row-view">交易結果： ${record.tradeResult || ''} ${record.tradeR ? ('｜R ' + record.tradeR) : ''}</div>`;
             const summaryEdit = `
-                        <div class="row-edit">幣種 <input class="inline-edit" value="${record.symbol}" data-k="symbol" data-i="${index}" style="width:140px">｜槓桿 <input class="inline-edit" type="number" value="${record.leverage}" data-k="leverage" data-i="${index}" style="width:90px">｜入場價位 <input class="inline-edit" type="number" value="${record.entry}" data-k="entry" data-i="${index}" style="width:120px"> ｜方向 <select class="inline-select" data-k="direction" data-i="${index}"><option value="long" ${record.direction==='long'?'selected':''}>多</option><option value="short" ${record.direction==='short'?'selected':''}>空</option></select>｜倉位價值 ${record.positionValue} U</div>
-                        <div class="row-edit">最大虧損: <input class="inline-edit" type="number" value="${record.maxLoss}" data-k="maxLoss" data-i="${index}" style="width:120px"> U ｜保證金 <input class="inline-edit" type="number" value="${record.margin}" data-k="margin" data-i="${index}" style="width:100px"> U｜止損 <input class="inline-edit" type="number" value="${record.stopPercent}" data-k="stopPercent" data-i="${index}" style="width:90px"> % <span class="edit-actions"><button class="pill-btn" data-action="saveRow" data-i="${index}">保存</button><button class="pill-btn" data-action="cancelEdit" data-i="${index}">取消</button></span></div>`;
+                        <div class="row-edit">幣種 <input class="inline-edit" value="${record.symbol}" data-k="symbol" data-i="${index}" style="width:120px">｜槓桿 <input class="inline-edit" type="number" value="${record.leverage}" data-k="leverage" data-i="${index}" style="width:80px">｜入場價位 <input class="inline-edit" type="number" value="${record.entry}" data-k="entry" data-i="${index}" style="width:110px"> ｜方向 <select class="inline-select" data-k="direction" data-i="${index}" style="width:auto;max-width:100px;"><option value="long" ${record.direction==='long'?'selected':''}>多</option><option value="short" ${record.direction==='short'?'selected':''}>空</option></select>｜倉位價值 ${record.positionValue} U</div>
+                        <div class="row-edit">最大虧損: <input class="inline-edit" type="number" value="${record.maxLoss}" data-k="maxLoss" data-i="${index}" style="width:110px"> U ｜保證金 <input class="inline-edit" type="number" value="${record.margin}" data-k="margin" data-i="${index}" style="width:90px"> U｜止損 <input class="inline-edit" type="number" value="${record.stopPercent}" data-k="stopPercent" data-i="${index}" style="width:80px"> % <span class="edit-actions"><button class="pill-btn" data-action="saveRow" data-i="${index}">保存</button><button class="pill-btn" data-action="cancelEdit" data-i="${index}">取消</button><button class="pill-btn" onclick="deleteRecord(${index})">刪除</button></span></div>`;
 
             html += `
                 <details class="history-item">
@@ -422,9 +422,9 @@ ${summaryEdit}
                 }
                 row.updatedAt = Date.now();
                 setHistory(history);
-                // 記住目前展開索引與編輯狀態
+                // 記住目前展開索引，保存後回到非編輯狀態
                 window._keepOpenIndex = i;
-                window._keepEditMode = true;
+                window._keepEditMode = false;
                 loadHistory();
                 syncToCloud().catch(()=>{});
             });
