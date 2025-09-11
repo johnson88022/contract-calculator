@@ -236,12 +236,14 @@ h2 {
   background: transparent;
   padding: 2px 4px;
   font-size: 14px;
-  max-width: 120px;
+  width: auto;
+  max-width: none;
 }
 .inline-select {
   font-size: 14px;
   padding: 2px 4px;
-  max-width: 120px;
+  width: auto;
+  max-width: none;
 }
 .row-view { display: block; }
 .row-edit { display: none; margin-top: 6px; }

@@ -263,6 +263,37 @@ document.addEventListener("DOMContentLoaded", function() {
             timestamp: new Date().toISOString()
         };
     }
+
+    // 讓內嵌輸入與選單寬度根據內容自動調整，不預留空白
+    function autosizeInlineFields(scope) {
+        const root = scope || document;
+        const measure = document.createElement('span');
+        measure.style.visibility = 'hidden';
+        measure.style.position = 'absolute';
+        measure.style.whiteSpace = 'pre';
+        measure.style.fontSize = '14px';
+        measure.style.fontFamily = getComputedStyle(document.body).fontFamily;
+        document.body.appendChild(measure);
+
+        function textWidth(text) {
+            measure.textContent = text || '';
+            return measure.getBoundingClientRect().width;
+        }
+
+        root.querySelectorAll('input.inline-edit').forEach(function(inp){
+            const val = (inp.value || inp.placeholder || '').toString();
+            const w = Math.ceil(textWidth(val)) + 10; // 內距微調
+            inp.style.width = w + 'px';
+        });
+
+        root.querySelectorAll('select.inline-select').forEach(function(sel){
+            const selectedText = sel.options[sel.selectedIndex] ? sel.options[sel.selectedIndex].text : '';
+            const w = Math.ceil(textWidth(selectedText)) + 24; // 包含下拉箭頭空間
+            sel.style.width = w + 'px';
+        });
+
+        document.body.removeChild(measure);
+    }
     
     // 歷史記錄功能
     function getHistory() {
@@ -325,8 +356,8 @@ document.addEventListener("DOMContentLoaded", function() {
                         <div class="row-view">最大虧損: ${record.maxLoss} U ｜保證金 ${record.margin} U｜止損 ${record.stopPercent} % <span class="edit-actions"><button class="pill-btn" data-action="editRow" data-i="${index}">編輯</button><button class="pill-btn" onclick="deleteRecord(${index})">刪除</button></span></div>
                         <div class="row-view">交易結果： ${record.tradeResult || ''} ${record.tradeR ? ('｜R ' + record.tradeR) : ''}</div>`;
             const summaryEdit = `
-                        <div class="row-edit">幣種 <input class="inline-edit" value="${record.symbol}" data-k="symbol" data-i="${index}" style="width:120px">｜槓桿 <input class="inline-edit" type="number" value="${record.leverage}" data-k="leverage" data-i="${index}" style="width:80px">｜入場價位 <input class="inline-edit" type="number" value="${record.entry}" data-k="entry" data-i="${index}" style="width:110px"> ｜方向 <select class="inline-select" data-k="direction" data-i="${index}" style="width:auto;max-width:100px;"><option value="long" ${record.direction==='long'?'selected':''}>多</option><option value="short" ${record.direction==='short'?'selected':''}>空</option></select>｜倉位價值 ${record.positionValue} U</div>
-                        <div class="row-edit">最大虧損: <input class="inline-edit" type="number" value="${record.maxLoss}" data-k="maxLoss" data-i="${index}" style="width:110px"> U ｜保證金 <input class="inline-edit" type="number" value="${record.margin}" data-k="margin" data-i="${index}" style="width:90px"> U｜止損 <input class="inline-edit" type="number" value="${record.stopPercent}" data-k="stopPercent" data-i="${index}" style="width:80px"> % <span class="edit-actions"><button class="pill-btn" data-action="saveRow" data-i="${index}">保存</button><button class="pill-btn" data-action="cancelEdit" data-i="${index}">取消</button><button class="pill-btn" onclick="deleteRecord(${index})">刪除</button></span></div>`;
+                        <div class="row-edit">幣種 <input class="inline-edit" value="${record.symbol}" data-k="symbol" data-i="${index}">｜槓桿 <input class="inline-edit" type="number" value="${record.leverage}" data-k="leverage" data-i="${index}">｜入場價位 <input class="inline-edit" type="number" value="${record.entry}" data-k="entry" data-i="${index}"> ｜方向 <select class="inline-select" data-k="direction" data-i="${index}"><option value="long" ${record.direction==='long'?'selected':''}>多</option><option value="short" ${record.direction==='short'?'selected':''}>空</option></select>｜倉位價值 ${record.positionValue} U</div>
+                        <div class="row-edit">最大虧損: <input class="inline-edit" type="number" value="${record.maxLoss}" data-k="maxLoss" data-i="${index}"> U ｜保證金 <input class="inline-edit" type="number" value="${record.margin}" data-k="margin" data-i="${index}"> U｜止損 <input class="inline-edit" type="number" value="${record.stopPercent}" data-k="stopPercent" data-i="${index}"> % <span class="edit-actions"><button class="pill-btn" data-action="saveRow" data-i="${index}">保存</button><button class="pill-btn" data-action="cancelEdit" data-i="${index}">取消</button><button class="pill-btn" onclick="deleteRecord(${index})">刪除</button></span></div>`;
 
             html += `
                 <details class="history-item">
@@ -334,7 +365,7 @@ document.addEventListener("DOMContentLoaded", function() {
 ${summaryView}
 ${summaryEdit}
                         <div>方向: ${record.direction === 'long' ? '做多 📈' : '做空 📉'}</div>
-                        <div style="margin-top:6px;">交易結果： <select data-action="resultSelect" data-i="${index}" style="width:auto; padding:4px 8px;"><option value="" ${record.tradeResult?'' : 'selected'}>未選擇</option><option ${record.tradeResult==='TP1'?'selected':''} value="TP1">TP1</option><option ${record.tradeResult==='TP2'?'selected':''} value="TP2">TP2</option><option ${record.tradeResult==='TP3'?'selected':''} value="TP3">TP3</option><option ${record.tradeResult==='SL'?'selected':''} value="SL">SL</option><option ${record.tradeResult==='R'?'selected':''} value="R">R</option></select><input class="inline-edit" type="number" step="0.01" placeholder="R 值" value="${record.tradeR || ''}" data-k="tradeR" data-i="${index}" style="width:90px; margin-left:6px;"></div>
+                        <div style="margin-top:6px;">交易結果： <select class="inline-select" data-action="resultSelect" data-i="${index}"><option value="" ${record.tradeResult?'' : 'selected'}>未選擇</option><option ${record.tradeResult==='TP1'?'selected':''} value="TP1">TP1</option><option ${record.tradeResult==='TP2'?'selected':''} value="TP2">TP2</option><option ${record.tradeResult==='TP3'?'selected':''} value="TP3">TP3</option><option ${record.tradeResult==='SL'?'selected':''} value="SL">SL</option><option ${record.tradeResult==='R'?'selected':''} value="R">R</option></select><input class="inline-edit" type="number" step="0.01" placeholder="R 值" value="${record.tradeR || ''}" data-k="tradeR" data-i="${index}" style="margin-left:6px;"></div>
                         <span class="result-hint">點我展開 TP 明細</span>
                     </summary>
                     <div class="result-details">
@@ -391,6 +422,8 @@ ${summaryEdit}
             window._keepEditMode = null;
         }
         // 綁定保存/編輯/取消/交易結果事件（在列表渲染後）
+        // 讓內嵌輸入/選單寬度自動貼合內容
+        autosizeInlineFields(historyDiv);
         historyDiv.querySelectorAll('button[data-action="saveRow"]').forEach(function(btn){
             btn.addEventListener('click', function(e){
                 const i = parseInt(e.currentTarget.getAttribute('data-i'));
@@ -440,6 +473,7 @@ ${summaryEdit}
                 if (!summary) return;
                 summary.querySelectorAll('.row-view').forEach(el=> el.style.display='none');
                 summary.querySelectorAll('.row-edit').forEach(el=> el.style.display='block');
+                autosizeInlineFields(summary);
             });
         });
         historyDiv.querySelectorAll('button[data-action="cancelEdit"]').forEach(function(btn){
