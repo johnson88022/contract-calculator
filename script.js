@@ -281,10 +281,12 @@ document.addEventListener("DOMContentLoaded", function() {
         }
 
         root.querySelectorAll('input.inline-edit').forEach(function(inp){
+            const initial = (inp.value || inp.placeholder || '').toString();
+            const minWidthPx = Math.ceil(textWidth(initial)) + 10;
             function resize() {
                 const val = (inp.value || inp.placeholder || '').toString();
                 const w = Math.ceil(textWidth(val)) + 10; // 內距微調
-                inp.style.width = w + 'px';
+                inp.style.width = Math.max(w, minWidthPx) + 'px';
             }
             resize();
             inp.removeEventListener('input', resize);
@@ -368,8 +370,7 @@ document.addEventListener("DOMContentLoaded", function() {
             const summaryEdit = `
                         <div class="row-edit">幣種 <input class="inline-edit" value="${record.symbol}" data-k="symbol" data-i="${index}">｜槓桿 <input class="inline-edit" type="number" value="${record.leverage}" data-k="leverage" data-i="${index}">｜入場價位 <input class="inline-edit" type="number" value="${record.entry}" data-k="entry" data-i="${index}"> ｜方向 <select class="inline-select" data-k="direction" data-i="${index}"><option value="long" ${record.direction==='long'?'selected':''}>多</option><option value="short" ${record.direction==='short'?'selected':''}>空</option></select>｜倉位價值 <input class="inline-edit" type="number" step="0.01" value="${record.positionValue}" data-k="positionValue" data-i="${index}"> U</div>
                         <div class="row-edit">最大虧損: <input class="inline-edit" type="number" value="${record.maxLoss}" data-k="maxLoss" data-i="${index}"> U ｜保證金 <input class="inline-edit" type="number" step="0.01" value="${record.margin}" data-k="margin" data-i="${index}"> U｜止損 <input class="inline-edit" type="number" step="0.01" value="${record.stopPercent}" data-k="stopPercent" data-i="${index}"> %</div>
-                        <div class="row-edit">交易結果： <select class="inline-select" data-action="resultSelect" data-i="${index}"><option value="" ${record.tradeResult?'' : 'selected'}>未選擇</option><option ${record.tradeResult==='TP1'?'selected':''} value="TP1">TP1</option><option ${record.tradeResult==='TP2'?'selected':''} value="TP2">TP2</option><option ${record.tradeResult==='TP3'?'selected':''} value="TP3">TP3</option><option ${record.tradeResult==='SL'?'selected':''} value="SL">SL</option><option ${record.tradeResult==='R'?'selected':''} value="R">R</option></select><input class="inline-edit" type="number" step="0.01" placeholder="R 值" value="${record.tradeR || ''}" data-k="tradeR" data-i="${index}" style="margin-left:6px;"></div>
-                        <div class="row-edit"><span class="edit-actions"><button class="pill-btn" data-action="saveRow" data-i="${index}">保存</button><button class="pill-btn" data-action="cancelEdit" data-i="${index}">取消</button></span></div>`;
+                        <div class="row-edit">交易結果： <select class="inline-select" data-action="resultSelect" data-i="${index}"><option value="" ${record.tradeResult?'' : 'selected'}>未選擇</option><option ${record.tradeResult==='TP1'?'selected':''} value="TP1">TP1</option><option ${record.tradeResult==='TP2'?'selected':''} value="TP2">TP2</option><option ${record.tradeResult==='TP3'?'selected':''} value="TP3">TP3</option><option ${record.tradeResult==='SL'?'selected':''} value="SL">SL</option><option ${record.tradeResult==='R'?'selected':''} value="R">R</option></select><input class="inline-edit" type="number" step="0.01" placeholder="R 值" value="${record.tradeR || ''}" data-k="tradeR" data-i="${index}" style="margin-left:6px;"></div>`;
 
             html += `
                 <details class="history-item">
@@ -409,7 +410,9 @@ ${summaryEdit}
                         </table>
                     </div>
                     <div class="record-actions" style="margin-top:8px;display:flex;gap:8px;justify-content:flex-end;">
-                        <button class="pill-btn" data-action="editRow" data-i="${index}">編輯</button>
+                        <button class="pill-btn action-edit" data-action="editRow" data-i="${index}">編輯</button>
+                        <button class="pill-btn action-save" data-action="saveRow" data-i="${index}" style="display:none;">保存</button>
+                        <button class="pill-btn action-cancel" data-action="cancelEdit" data-i="${index}" style="display:none;">取消</button>
                         <button class="pill-btn" onclick="deleteRecord(${index})">刪除</button>
                     </div>
                 </details>
@@ -443,7 +446,8 @@ ${summaryEdit}
                 let history = getHistory();
                 const row = history[i];
                 if (!row) return;
-                const container = e.currentTarget.closest('summary').parentElement; // details
+                const details = e.currentTarget.closest('details');
+                const container = details; // operate within details
                 const inputs = container.querySelectorAll('input[data-k]');
                 inputs.forEach(function(inp){
                     const k = inp.getAttribute('data-k');
@@ -484,6 +488,22 @@ ${summaryEdit}
                 window._keepEditMode = false;
                 loadHistory();
                 syncToCloud().catch(()=>{});
+                // 切換按鈕狀態
+                if (details) {
+                    const summary = details.querySelector('summary');
+                    if (summary) {
+                        summary.querySelectorAll('.row-edit').forEach(function(el){ el.style.display='none'; });
+                        summary.querySelectorAll('.row-view').forEach(function(el){ el.style.display='block'; });
+                    }
+                    const editBtn = details.querySelector('.action-edit');
+                    const saveBtn = details.querySelector('.action-save');
+                    const cancelBtn = details.querySelector('.action-cancel');
+                    if (editBtn && saveBtn && cancelBtn) {
+                        editBtn.style.display = '';
+                        saveBtn.style.display = 'none';
+                        cancelBtn.style.display = 'none';
+                    }
+                }
             });
         });
         historyDiv.querySelectorAll('button[data-action="editRow"]').forEach(function(btn){
@@ -495,14 +515,31 @@ ${summaryEdit}
                 summary.querySelectorAll('.row-view').forEach(function(el){ el.style.display='none'; });
                 summary.querySelectorAll('.row-edit').forEach(function(el){ el.style.display='block'; });
                 autosizeInlineFields(summary);
+                const editBtn = details.querySelector('.action-edit');
+                const saveBtn = details.querySelector('.action-save');
+                const cancelBtn = details.querySelector('.action-cancel');
+                if (editBtn && saveBtn && cancelBtn) {
+                    editBtn.style.display = 'none';
+                    saveBtn.style.display = '';
+                    cancelBtn.style.display = '';
+                }
             });
         });
         historyDiv.querySelectorAll('button[data-action="cancelEdit"]').forEach(function(btn){
             btn.addEventListener('click', function(e){
-                const summary = e.currentTarget.closest('summary');
+                const details = e.currentTarget.closest('details');
+                const summary = details ? details.querySelector('summary') : null;
                 if (!summary) return;
-                summary.querySelectorAll('.row-edit').forEach(el=> el.style.display='none');
-                summary.querySelectorAll('.row-view').forEach(el=> el.style.display='block');
+                summary.querySelectorAll('.row-edit').forEach(function(el){ el.style.display='none'; });
+                summary.querySelectorAll('.row-view').forEach(function(el){ el.style.display='block'; });
+                const editBtn = details.querySelector('.action-edit');
+                const saveBtn = details.querySelector('.action-save');
+                const cancelBtn = details.querySelector('.action-cancel');
+                if (editBtn && saveBtn && cancelBtn) {
+                    editBtn.style.display = '';
+                    saveBtn.style.display = 'none';
+                    cancelBtn.style.display = 'none';
+                }
             });
         });
         historyDiv.querySelectorAll('select[data-action="resultSelect"]').forEach(function(sel){
