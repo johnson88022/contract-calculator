@@ -405,6 +405,11 @@ ${summaryEdit}
                     if (k !== 'symbol') v = parseFloat(v);
                     row[k] = v;
                 });
+                // 同步保存交易結果選擇
+                const resultSel = container.querySelector(`select[data-action="resultSelect"][data-i="${i}"]`);
+                if (resultSel) {
+                    row.tradeResult = resultSel.value;
+                }
                 // 依最新 entry/leverage/stopPercent 等重新計算衍生欄位
                 const L = parseFloat(row.leverage)||0;
                 const E = parseFloat(row.entry)||0;
