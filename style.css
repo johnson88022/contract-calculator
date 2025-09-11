@@ -251,6 +251,10 @@ h2 {
 .pill-btn { padding: 4px 10px; border-radius: 999px; border: 1px solid #d1d5db; background:#f3f4f6; width:auto; font-size:12px; }
 .pill-btn:hover { background:#e5e7eb; }
 
+/* 歷史紀錄底部動作列：桌機與手機一致靠右排列 */
+.record-actions { display:flex; gap:8px; justify-content:flex-end; margin-top:8px; }
+.record-actions .pill-btn { width:auto; }
+
 /* 響應式設計 */
 @media (max-width: 480px) {
   .container { padding: 10px 8px; }

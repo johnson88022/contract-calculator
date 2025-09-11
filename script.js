@@ -362,11 +362,12 @@ document.addEventListener("DOMContentLoaded", function() {
             const tp2res = calcProfit(prices.tp2, p.tp2);
             const tp3res = calcProfit(prices.tp3, p.tp3);
 
+            const rText = (record.tradeResult === 'R' && record.tradeR !== undefined && record.tradeR !== null && record.tradeR !== '' && !isNaN(parseFloat(record.tradeR))) ? ('R ' + parseFloat(record.tradeR)) : (record.tradeResult || '');
             const summaryView = `
                         <div style="margin-bottom: 6px;"><b>${record.time}</b></div>
                         <div class="row-view">幣種 ${record.symbol}｜槓桿 ${record.leverage}｜入場價位 ${record.entry} ｜方向 ${record.direction === 'long' ? '多' : '空'}｜倉位價值 ${record.positionValue} U</div>
                         <div class="row-view">最大虧損: ${record.maxLoss} U ｜保證金 ${record.margin} U｜止損 ${record.stopPercent} % </div>
-                        <div class="row-view">交易結果： ${record.tradeResult ? (record.tradeResult === 'R' ? ('R ' + (record.tradeR || '')) : record.tradeResult) : ''}</div>`;
+                        <div class="row-view">交易結果： ${rText}</div>`;
             const summaryEdit = `
                         <div class="row-edit">幣種 <input class="inline-edit" value="${record.symbol}" data-k="symbol" data-i="${index}">｜槓桿 <input class="inline-edit" type="number" value="${record.leverage}" data-k="leverage" data-i="${index}">｜入場價位 <input class="inline-edit" type="number" value="${record.entry}" data-k="entry" data-i="${index}"> ｜方向 <select class="inline-select" data-k="direction" data-i="${index}"><option value="long" ${record.direction==='long'?'selected':''}>多</option><option value="short" ${record.direction==='short'?'selected':''}>空</option></select>｜倉位價值 <input class="inline-edit" type="number" step="0.01" value="${record.positionValue}" data-k="positionValue" data-i="${index}"> U</div>
                         <div class="row-edit">最大虧損: <input class="inline-edit" type="number" value="${record.maxLoss}" data-k="maxLoss" data-i="${index}"> U ｜保證金 <input class="inline-edit" type="number" step="0.01" value="${record.margin}" data-k="margin" data-i="${index}"> U｜止損 <input class="inline-edit" type="number" step="0.01" value="${record.stopPercent}" data-k="stopPercent" data-i="${index}"> %</div>
