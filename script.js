@@ -364,7 +364,6 @@ document.addEventListener("DOMContentLoaded", function() {
 
             const rText = (record.tradeResult === 'R' && record.tradeR !== undefined && record.tradeR !== null && record.tradeR !== '' && !isNaN(parseFloat(record.tradeR))) ? ('R ' + String(record.tradeR)) : (record.tradeResult || '');
             const summaryView = `
-                        <div style="margin-bottom: 6px;"><b>${record.time}</b></div>
                         <div style="padding: 10px; background: #f0f9ff; border-radius: 8px; border: 1px solid #bae6fd;">
                             <div style="font-weight: bold; margin-bottom: 8px;">📊 計算結果</div>
                             <div>幣種 ${record.symbol}｜槓桿 ${record.leverage}｜入場價位 ${record.entry} ｜方向 ${record.direction === 'long' ? '多' : '空'}｜倉位價值 ${record.positionValue} U</div>
