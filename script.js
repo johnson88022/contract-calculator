@@ -281,15 +281,25 @@ document.addEventListener("DOMContentLoaded", function() {
         }
 
         root.querySelectorAll('input.inline-edit').forEach(function(inp){
-            const val = (inp.value || inp.placeholder || '').toString();
-            const w = Math.ceil(textWidth(val)) + 10; // 內距微調
-            inp.style.width = w + 'px';
+            function resize() {
+                const val = (inp.value || inp.placeholder || '').toString();
+                const w = Math.ceil(textWidth(val)) + 10; // 內距微調
+                inp.style.width = w + 'px';
+            }
+            resize();
+            inp.removeEventListener('input', resize);
+            inp.addEventListener('input', resize);
         });
 
         root.querySelectorAll('select.inline-select').forEach(function(sel){
-            const selectedText = sel.options[sel.selectedIndex] ? sel.options[sel.selectedIndex].text : '';
-            const w = Math.ceil(textWidth(selectedText)) + 24; // 包含下拉箭頭空間
-            sel.style.width = w + 'px';
+            function resizeSel() {
+                const selectedText = sel.options[sel.selectedIndex] ? sel.options[sel.selectedIndex].text : '';
+                const w = Math.ceil(textWidth(selectedText)) + 24; // 包含下拉箭頭空間
+                sel.style.width = w + 'px';
+            }
+            resizeSel();
+            sel.removeEventListener('change', resizeSel);
+            sel.addEventListener('change', resizeSel);
         });
 
         document.body.removeChild(measure);
@@ -353,11 +363,16 @@ document.addEventListener("DOMContentLoaded", function() {
             const summaryView = `
                         <div style="margin-bottom: 6px;"><b>${record.time}</b></div>
                         <div class="row-view">幣種 ${record.symbol}｜槓桿 ${record.leverage}｜入場價位 ${record.entry} ｜方向 ${record.direction === 'long' ? '多' : '空'}｜倉位價值 ${record.positionValue} U</div>
-                        <div class="row-view">最大虧損: ${record.maxLoss} U ｜保證金 ${record.margin} U｜止損 ${record.stopPercent} % <span class="edit-actions"><button class="pill-btn" data-action="editRow" data-i="${index}">編輯</button><button class="pill-btn" onclick="deleteRecord(${index})">刪除</button></span></div>
-                        <div class="row-view">交易結果： ${record.tradeResult || ''} ${record.tradeR ? ('｜R ' + record.tradeR) : ''}</div>`;
+                        <div class="row-view">最大虧損: ${record.maxLoss} U ｜保證金 ${record.margin} U｜止損 ${record.stopPercent} % </div>
+                        <div class="row-view">交易結果：</div>
+                        <div class="row-view">方向: ${record.direction === 'long' ? '做多 📈' : '做空 📉'}</div>
+                        <div class="row-view">交易結果： ${(record.tradeResult || '') + (record.tradeR ? (' ' + record.tradeR) : '')}</div>
+                        <div class="row-view" style="margin-top:6px;"><span class="edit-actions"><button class="pill-btn" data-action="editRow" data-i="${index}">編輯</button><button class="pill-btn" onclick="deleteRecord(${index})">刪除</button></span></div>`;
             const summaryEdit = `
-                        <div class="row-edit">幣種 <input class="inline-edit" value="${record.symbol}" data-k="symbol" data-i="${index}">｜槓桿 <input class="inline-edit" type="number" value="${record.leverage}" data-k="leverage" data-i="${index}">｜入場價位 <input class="inline-edit" type="number" value="${record.entry}" data-k="entry" data-i="${index}"> ｜方向 <select class="inline-select" data-k="direction" data-i="${index}"><option value="long" ${record.direction==='long'?'selected':''}>多</option><option value="short" ${record.direction==='short'?'selected':''}>空</option></select>｜倉位價值 ${record.positionValue} U</div>
-                        <div class="row-edit">最大虧損: <input class="inline-edit" type="number" value="${record.maxLoss}" data-k="maxLoss" data-i="${index}"> U ｜保證金 <input class="inline-edit" type="number" value="${record.margin}" data-k="margin" data-i="${index}"> U｜止損 <input class="inline-edit" type="number" value="${record.stopPercent}" data-k="stopPercent" data-i="${index}"> % <span class="edit-actions"><button class="pill-btn" data-action="saveRow" data-i="${index}">保存</button><button class="pill-btn" data-action="cancelEdit" data-i="${index}">取消</button><button class="pill-btn" onclick="deleteRecord(${index})">刪除</button></span></div>`;
+                        <div class="row-edit">幣種 <input class="inline-edit" value="${record.symbol}" data-k="symbol" data-i="${index}">｜槓桿 <input class="inline-edit" type="number" value="${record.leverage}" data-k="leverage" data-i="${index}">｜入場價位 <input class="inline-edit" type="number" value="${record.entry}" data-k="entry" data-i="${index}"> ｜方向 <select class="inline-select" data-k="direction" data-i="${index}"><option value="long" ${record.direction==='long'?'selected':''}>多</option><option value="short" ${record.direction==='short'?'selected':''}>空</option></select>｜倉位價值 <input class="inline-edit" type="number" step="0.01" value="${record.positionValue}" data-k="positionValue" data-i="${index}"> U</div>
+                        <div class="row-edit">最大虧損: <input class="inline-edit" type="number" value="${record.maxLoss}" data-k="maxLoss" data-i="${index}"> U ｜保證金 <input class="inline-edit" type="number" step="0.01" value="${record.margin}" data-k="margin" data-i="${index}"> U｜止損 <input class="inline-edit" type="number" step="0.01" value="${record.stopPercent}" data-k="stopPercent" data-i="${index}"> %</div>
+                        <div class="row-edit">交易結果： <select class="inline-select" data-action="resultSelect" data-i="${index}"><option value="" ${record.tradeResult?'' : 'selected'}>未選擇</option><option ${record.tradeResult==='TP1'?'selected':''} value="TP1">TP1</option><option ${record.tradeResult==='TP2'?'selected':''} value="TP2">TP2</option><option ${record.tradeResult==='TP3'?'selected':''} value="TP3">TP3</option><option ${record.tradeResult==='SL'?'selected':''} value="SL">SL</option><option ${record.tradeResult==='R'?'selected':''} value="R">R</option></select><input class="inline-edit" type="number" step="0.01" placeholder="R 值" value="${record.tradeR || ''}" data-k="tradeR" data-i="${index}" style="margin-left:6px;"></div>
+                        <div class="row-edit"><span class="edit-actions"><button class="pill-btn" data-action="saveRow" data-i="${index}">保存</button><button class="pill-btn" data-action="cancelEdit" data-i="${index}">取消</button><button class="pill-btn" onclick="deleteRecord(${index})">刪除</button></span></div>`;
 
             html += `
                 <details class="history-item">
