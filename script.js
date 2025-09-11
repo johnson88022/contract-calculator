@@ -1,4 +1,3 @@
-// 完整的 script.js 包含雲端同步
 document.addEventListener("DOMContentLoaded", function() {
     console.log("DOM已加載完成");
     
@@ -310,60 +309,98 @@ document.addEventListener("DOMContentLoaded", function() {
     // 綁定編輯時的即時計算（更新 stopPercent、positionValue、margin）
     function setupLiveRecalc(summary) {
         if (!summary) return;
-        function recalcAndUpdate() {
-            const getNum = (sel) => {
-                const el = summary.querySelector(sel);
-                if (!el) return NaN;
-                const v = parseFloat(el.value);
-                return isNaN(v) ? NaN : v;
-            };
-            const getSel = (sel) => {
-                const el = summary.querySelector(sel);
-                return el ? el.value : '';
-            };
 
-            const L = getNum('input.inline-edit[data-k="leverage"]');
-            const E = getNum('input.inline-edit[data-k="entry"]');
-            const S = getNum('input.inline-edit[data-k="stop"]');
-            const M = getNum('input.inline-edit[data-k="maxLoss"]');
-            const dir = getSel('select.inline-select[data-k="direction"]') || 'long';
+        // helper: 取得第一個有效數值（多個相同 data-k 會回傳第一個能 parse 的）
+        function getNumVal(dataK) {
+            const els = summary.querySelectorAll(`input.inline-edit[data-k="${dataK}"]`);
+            for (const el of els) {
+                const v = parseFloat(el.value);
+                if (!isNaN(v)) return v;
+            }
+            return NaN;
+        }
+        function getSelVal(dataK) {
+            const els = summary.querySelectorAll(`select.inline-select[data-k="${dataK}"]`);
+            for (const el of els) {
+                if (el.value !== undefined && el.value !== null) return el.value;
+            }
+            return '';
+        }
+        function setAllInputs(selector, val) {
+            const els = summary.querySelectorAll(selector);
+            els.forEach(el => {
+                if (el.tagName.toLowerCase() === 'input') {
+                    // 如果是數字（string or number），嘗試保留原格式（若為 number，轉為固定小數）
+                    el.value = (val === null || val === undefined) ? '' : String(val);
+                } else if (el.tagName.toLowerCase() === 'select') {
+                    el.value = val;
+                }
+            });
+        }
+
+        function recalcAndUpdate() {
+            const L = getNumVal('leverage');
+            const E = getNumVal('entry');
+            const S = getNumVal('stop');
+            const M = getNumVal('maxLoss');
+            const dir = getSelVal('direction') || 'long';
 
             if (isNaN(L) || isNaN(E) || isNaN(S) || isNaN(M)) {
+                // 若不是完整數值，清空衍生顯示（或保持現狀）
+                setAllInputs('input.inline-edit[data-k="stopPercent"]', '');
+                setAllInputs('input.inline-edit[data-k="positionValue"]', '');
+                setAllInputs('input.inline-edit[data-k="margin"]', '');
+                autosizeInlineFields(summary);
                 return;
             }
 
             const riskPer = dir === 'long' ? (E - S) : (S - E);
             if (riskPer <= 0) {
+                // 不合理的止損方向
+                setAllInputs('input.inline-edit[data-k="stopPercent"]', '');
+                setAllInputs('input.inline-edit[data-k="positionValue"]', '');
+                setAllInputs('input.inline-edit[data-k="margin"]', '');
+                autosizeInlineFields(summary);
                 return;
             }
             const stopPercent = ((Math.abs(E - S) / (E || 1)) * 100).toFixed(2);
             const positionValue = (M / riskPer) * E;
             const margin = positionValue / (L || 1);
 
-            const setVal = (sel, val) => {
-                const el = summary.querySelector(sel);
-                if (el) { el.value = typeof val === 'number' ? val.toFixed(2) : String(val); }
-            };
-            setVal('input.inline-edit[data-k="stopPercent"]', stopPercent);
-            setVal('input.inline-edit[data-k="positionValue"]', positionValue);
-            setVal('input.inline-edit[data-k="margin"]', margin);
+            setAllInputs('input.inline-edit[data-k="stopPercent"]', stopPercent);
+            setAllInputs('input.inline-edit[data-k="positionValue"]', positionValue.toFixed(2));
+            setAllInputs('input.inline-edit[data-k="margin"]', margin.toFixed(2));
             autosizeInlineFields(summary);
         }
 
-        const bindTargets = [
-            'input.inline-edit[data-k="leverage"]',
-            'input.inline-edit[data-k="entry"]',
-            'input.inline-edit[data-k="stop"]',
-            'input.inline-edit[data-k="maxLoss"]',
-            'select.inline-select[data-k="direction"]'
-        ];
-        bindTargets.forEach((sel) => {
-            const el = summary.querySelector(sel);
-            if (el) {
-                el.addEventListener('input', recalcAndUpdate);
+        // 要監聽的 data-k 列表（若將來增加可擴充）
+        const keysToBind = ['leverage','entry','stop','maxLoss'];
+        keysToBind.forEach((k) => {
+            const els = summary.querySelectorAll(`input.inline-edit[data-k="${k}"]`);
+            els.forEach((el) => {
+                el.addEventListener('input', (e) => {
+                    // 同步同一 summary 中其它相同 data-k 欄位
+                    els.forEach(other => { if (other !== el) other.value = el.value; });
+                    recalcAndUpdate();
+                });
                 el.addEventListener('change', recalcAndUpdate);
-            }
+            });
         });
+
+        // direction (select) 同步監聽
+        const dirEls = summary.querySelectorAll('select.inline-select[data-k="direction"]');
+        dirEls.forEach((sel) => {
+            sel.addEventListener('change', (e) => {
+                dirEls.forEach(other => { if (other !== sel) other.value = sel.value; });
+                recalcAndUpdate();
+            });
+            sel.addEventListener('input', (e) => {
+                dirEls.forEach(other => { if (other !== sel) other.value = sel.value; });
+                recalcAndUpdate();
+            });
+        });
+
+        // 再跑一次以初始化顯示
         recalcAndUpdate();
     }
     
@@ -516,6 +553,8 @@ ${summaryEdit}
         // 綁定保存/編輯/取消/交易結果事件（在列表渲染後）
         // 讓內嵌輸入/選單寬度自動貼合內容
         autosizeInlineFields(historyDiv);
+
+        // 保存按鈕
         historyDiv.querySelectorAll('button[data-action="saveRow"]').forEach(function(btn){
             btn.addEventListener('click', function(e){
                 const i = parseInt(e.currentTarget.getAttribute('data-i'));
@@ -528,8 +567,12 @@ ${summaryEdit}
                 inputs.forEach(function(inp){
                     const k = inp.getAttribute('data-k');
                     let v = inp.value;
-                    if (k !== 'symbol') v = parseFloat(v);
-                    row[k] = v;
+                    if (k !== 'symbol') {
+                        const n = parseFloat(v);
+                        row[k] = isNaN(n) ? v : n;
+                    } else {
+                        row[k] = v;
+                    }
                 });
                 // 讀取 select 類型欄位（例如方向）
                 const selects = container.querySelectorAll('select[data-k]');
@@ -588,6 +631,8 @@ ${summaryEdit}
                 }
             });
         });
+
+        // 編輯按鈕：點擊後進入編輯模式（需要點擊才能編輯）
         historyDiv.querySelectorAll('button[data-action="editRow"]').forEach(function(btn){
             btn.addEventListener('click', function(e){
                 const details = e.currentTarget.closest('details');
@@ -597,7 +642,7 @@ ${summaryEdit}
                 summary.querySelectorAll('.row-view').forEach(function(el){ el.style.display='none'; });
                 summary.querySelectorAll('.row-edit').forEach(function(el){ el.style.display='block'; });
                 autosizeInlineFields(summary);
-                setupLiveRecalc(summary);
+                setupLiveRecalc(summary); // 重新綁定即時計算，支援多個相同 data-k 的同步
                 const editBtn = details.querySelector('.action-edit');
                 const saveBtn = details.querySelector('.action-save');
                 const cancelBtn = details.querySelector('.action-cancel');
@@ -608,6 +653,8 @@ ${summaryEdit}
                 }
             });
         });
+
+        // 取消按鈕（還原，不保存）
         historyDiv.querySelectorAll('button[data-action="cancelEdit"]').forEach(function(btn){
             btn.addEventListener('click', function(e){
                 const details = e.currentTarget.closest('details');
@@ -625,6 +672,8 @@ ${summaryEdit}
                 }
             });
         });
+
+        // 交易結果選擇變更即時存檔（簡單同步）
         historyDiv.querySelectorAll('select[data-action="resultSelect"]').forEach(function(sel){
             sel.addEventListener('change', function(e){
                 const i = parseInt(e.currentTarget.getAttribute('data-i'));
